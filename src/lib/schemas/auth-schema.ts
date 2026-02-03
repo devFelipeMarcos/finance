@@ -16,6 +16,11 @@ export const registerSchema = z.object({
     .string()
     .min(1, "O e-mail é obrigatório")
     .email("Formato de e-mail inválido"),
+  phone: z
+    .string()
+    .trim()
+    .min(8, "Informe um telefone válido")
+    .max(20, "Informe um telefone válido"),
   password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
 });
 

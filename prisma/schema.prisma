@@ -14,6 +14,7 @@ model User {
   emailVerified DateTime?
   password      String?
   image         String?
+  phone         String?       @unique
   accounts      Account[]
   sessions      Session[]
   transactions  Transaction[]

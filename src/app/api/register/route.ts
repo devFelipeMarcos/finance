@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const { name, email, password } = registerSchema.parse(body);
+    const { name, email, phone, password } = registerSchema.parse(body);
 
     // Checa se usuário já existe
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
       data: {
         name,
         email,
+        phone,
         password: hashedPassword,
 
         categories: {

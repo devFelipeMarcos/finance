@@ -38,6 +38,7 @@ export default function RegisterPage() {
       body: JSON.stringify({
         name: data.name,
         email: data.email,
+        phone: data.phone,
         password: data.password,
         redirect: false,
       }),
@@ -76,6 +77,19 @@ export default function RegisterPage() {
                 {errors.name && (
                   <span className="text-red-500 text-sm">
                     {errors.name.message}
+                  </span>
+                )}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="phone">Telefone</Label>
+                <Input
+                  type="tel"
+                  placeholder="(11) 99999-9999"
+                  {...register("phone")}
+                />
+                {errors.phone && (
+                  <span className="text-red-500 text-sm">
+                    {errors.phone.message}
                   </span>
                 )}
               </div>
