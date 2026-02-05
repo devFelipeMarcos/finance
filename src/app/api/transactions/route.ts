@@ -109,20 +109,29 @@ export async function POST(req: Request) {
         );
       }
 
-      let wallet = await prisma.wallet.findFirst({
-        where: {
-          userId: user.id,
-          name: "Carteira Padrão",
-        },
-      });
-
+      let walletIdInput = body.walletId as string | undefined;
+      let wallet = null as any;
+      if (walletIdInput) {
+        const w = await prisma.wallet.findUnique({ where: { id: walletIdInput } });
+        if (w && w.userId === user.id) {
+          wallet = w;
+        }
+      }
       if (!wallet) {
-        wallet = await prisma.wallet.create({
-          data: {
-            name: "Carteira Padrão",
+        wallet = await prisma.wallet.findFirst({
+          where: {
             userId: user.id,
+            name: "Carteira Padrão",
           },
         });
+        if (!wallet) {
+          wallet = await prisma.wallet.create({
+            data: {
+              name: "Carteira Padrão",
+              userId: user.id,
+            },
+          });
+        }
       }
 
       let resolvedCategoryId: string | null = null;
@@ -158,10 +167,13 @@ export async function POST(req: Request) {
         resolvedCategoryId = otherCategory.id;
       }
 
-      let type = body.type as "income" | "expense" | undefined;
-      if (type !== "income" && type !== "expense") {
-        type = "expense";
-      }
+      const typeRaw = String(body.typeTransaction ?? body.type ?? "").toLowerCase();
+      let type: "income" | "expense" =
+        typeRaw === "income" || typeRaw === "receita"
+          ? "income"
+          : typeRaw === "expense" || typeRaw === "despesa"
+          ? "expense"
+          : "expense";
 
       const transaction = await prisma.transaction.create({
         data: {

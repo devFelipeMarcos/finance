@@ -10,6 +10,78 @@ export async function GET(req: Request) {
     const type = searchParams.get("type") || "select";
     const month = searchParams.get("month");
     const year = searchParams.get("year");
+    const phone = searchParams.get("phone");
+
+    if (phone) {
+      const user = await prisma.user.findUnique({
+        where: { phone },
+      });
+      if (!user) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+
+      if (type === "summary") {
+        const wallets = await prisma.wallet.findMany({
+          where: { userId: user.id },
+          include: {
+            transactions: {
+              select: { value: true, description: true, date: true, type: true },
+              orderBy: { date: "asc" },
+            },
+          },
+        });
+
+        const result = wallets.map((wallet) => {
+          const filteredTransactions =
+            month && year
+              ? walletsFilterByMonthYear(wallet.transactions, month, year)
+              : wallet.transactions;
+
+          const totalIncomePeriod = filteredTransactions
+            .filter((t) => t.type === "income")
+            .reduce((acc, t) => acc + t.value, 0);
+
+          const totalExpensePeriod = filteredTransactions
+            .filter((t) => t.type === "expense")
+            .reduce((acc, t) => acc + t.value, 0);
+
+          const totalIncomeAllTime = wallet.transactions
+            .filter((t) => t.type === "income")
+            .reduce((acc, t) => acc + t.value, 0);
+
+          const totalExpenseAllTime = wallet.transactions
+            .filter((t) => t.type === "expense")
+            .reduce((acc, t) => acc + t.value, 0);
+
+          const lastTransaction = wallet.transactions.length
+            ? wallet.transactions[wallet.transactions.length - 1]
+            : null;
+
+          return {
+            id: wallet.id,
+            name: wallet.name,
+            totalIncome: totalIncomePeriod,
+            totalExpense: totalExpensePeriod,
+            balance: totalIncomeAllTime - totalExpenseAllTime,
+            lastTransaction: lastTransaction
+              ? {
+                  amount: lastTransaction.value,
+                  date: lastTransaction.date.toISOString(),
+                  type: lastTransaction.type,
+                }
+              : null,
+          };
+        });
+
+        return NextResponse.json(result);
+      }
+
+      const wallets = await prisma.wallet.findMany({
+        where: { userId: user.id },
+        select: { id: true, name: true },
+      });
+      return NextResponse.json(wallets);
+    }
 
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -35,19 +107,11 @@ export async function GET(req: Request) {
       });
 
       const result = wallets.map((wallet) => {
-        //  Transações filtradas por mês/ano (para totalIncome/totalExpense do período)
         const filteredTransactions =
           month && year
-            ? wallet.transactions.filter((t) => {
-                const d = new Date(t.date);
-                return (
-                  d.getMonth() + 1 === Number(month) &&
-                  d.getFullYear() === Number(year)
-                );
-              })
+            ? walletsFilterByMonthYear(wallet.transactions, month, year)
             : wallet.transactions;
 
-        //  Totais do período filtrado
         const totalIncomePeriod = filteredTransactions
           .filter((t) => t.type === "income")
           .reduce((acc, t) => acc + t.value, 0);
@@ -56,7 +120,6 @@ export async function GET(req: Request) {
           .filter((t) => t.type === "expense")
           .reduce((acc, t) => acc + t.value, 0);
 
-        //  Totais gerais (para o saldo completo)
         const totalIncomeAllTime = wallet.transactions
           .filter((t) => t.type === "income")
           .reduce((acc, t) => acc + t.value, 0);
@@ -153,4 +216,15 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
+}
+
+function walletsFilterByMonthYear<T extends { date: Date | string }>(
+  transactions: T[],
+  month: string | null,
+  year: string | null
+): T[] {
+  return transactions.filter((t) => {
+    const d = new Date(t.date as Date | string);
+    return d.getMonth() + 1 === Number(month) && d.getFullYear() === Number(year);
+  });
 }
