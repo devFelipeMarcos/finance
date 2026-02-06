@@ -41,13 +41,28 @@ export async function PUT(
   }
 
   const body = await req.json();
-  const { name } = walletSchema.parse(body);
+  const parsed = walletSchema.parse(body);
 
   try {
     const wallets = await prisma.wallet.update({
       where: { id },
       data: {
-        name,
+        name: parsed.name,
+        ...(parsed as any).type === "credit_card"
+          ? {
+              type: "credit_card" as const,
+              brand: (parsed as any).brand,
+              color: (parsed as any).color,
+              limit: (parsed as any).limit,
+              billingDay: (parsed as any).billingDay,
+            }
+          : {
+              type: "wallet" as const,
+              brand: null,
+              color: null,
+              limit: null,
+              billingDay: null,
+            },
       },
     });
 

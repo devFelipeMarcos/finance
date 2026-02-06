@@ -89,9 +89,29 @@ model Wallet {
   userId       String 
   user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
+  type         WalletType     @default(wallet)
+  brand        CardBrand?
+  color        String?
+  limit        Float?
+  billingDay   Int?
+  displayNumber String?
   @@unique([name, userId])
 }
 
+enum WalletType {
+  wallet
+  credit_card
+}
+
+enum CardBrand {
+  visa
+  mastercard
+  amex
+  elo
+  hipercard
+  diners
+  discover
+}
 
 enum TransactionType {
   income

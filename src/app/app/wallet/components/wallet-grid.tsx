@@ -31,6 +31,12 @@ export default function WalletGrid() {
           id={wallet.id}
           key={wallet.id}
           name={wallet.name}
+          type={wallet.type}
+          brand={wallet.brand}
+          color={wallet.color}
+          limit={wallet.limit}
+          billingDay={wallet.billingDay}
+          displayNumber={wallet.displayNumber}
           balance={wallet.balance}
           lastTransaction={wallet.lastTransaction}
           totalExpense={wallet.totalExpense}

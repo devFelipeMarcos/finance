@@ -6,14 +6,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowDown, ArrowUp, Wallet } from "lucide-react";
+import { ArrowDown, ArrowUp, Wallet, CreditCard } from "lucide-react";
 import { EditWalletDialog } from "@/app/app/wallet/components/edit-wallet-dialog";
 import { formatCurrency } from "@/utils/format-currency";
 import { DeleteWalletDialog } from "./delete-wallet-dialog";
+import Image from "next/image";
 
 type WalletCardProps = {
   id: string;
   name: string;
+  type?: "wallet" | "credit_card";
+  brand?: "visa" | "mastercard" | "amex" | "elo" | "hipercard" | "diners" | "discover";
+  color?: string;
+  limit?: number;
+  billingDay?: number | null;
+  displayNumber?: string | null;
   balance: number;
   lastTransaction: {
     amount: number;
@@ -27,13 +34,72 @@ type WalletCardProps = {
 export default function WalletCard({
   id,
   name,
+  type,
+  brand,
+  color,
+  limit,
+  billingDay,
+  displayNumber,
   balance,
   lastTransaction,
   totalExpense,
   totalIncome,
 }: WalletCardProps) {
+  const isCard = type === "credit_card";
+  if (isCard) {
+    const creditBalance = (limit ?? 0) - totalExpense;
+    return (
+      <Card className="w-full bg-transparent border-none shadow-none p-0">
+        <CardContent className="p-0">
+          <div
+            className="relative w-full rounded-2xl p-6 text-white flex flex-col gap-4 min-h-[220px]"
+            style={{ background: color ?? "#6b21a8" }}
+          >
+            <div className="flex flex-wrap justify-between items-center gap-2">
+              <div className="flex items-center gap-2">
+                {brand === "visa" || brand === "mastercard" ? (
+                  <div className="relative h-6 w-14">
+                    <Image
+                      src={brand === "visa" ? "/visa.png" : "/mastercard.png"}
+                      alt={brand ?? ""}
+                      fill
+                      className="object-contain"
+                      sizes="56px"
+                      priority={false}
+                    />
+                  </div>
+                ) : (
+                  <span className="uppercase tracking-widest text-sm">{brand ?? ""}</span>
+                )}
+                <span className="text-sm opacity-90">{name}</span>
+              </div>
+              <div className="flex items-center gap-2 whitespace-nowrap">
+                <CreditCard className="w-5 h-5 opacity-80" />
+                <span className="text-xs">{billingDay ? `Venc: ${billingDay}` : ""}</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 whitespace-nowrap">
+              <EditWalletDialog wallets={{ id, name, type, brand, color, limit, billingDay: billingDay ?? undefined }} />
+              <DeleteWalletDialog id={id} />
+            </div>
+            <div className="text-2xl font-mono tracking-widest">
+              {displayNumber ?? "1234 5678 9876 5432"}
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span>Fatura {formatCurrency(totalExpense)}</span>
+              <span>Limite {formatCurrency(limit ?? 0)}</span>
+            </div>
+            <div className="flex justify-end items-center text-sm">
+              <span>Saldo {formatCurrency(creditBalance)}</span>
+            </div>
+          </div>
+        </CardContent>
+        {/* Sem entradas/saídas no cartão */}
+      </Card>
+    );
+  }
   return (
-    <Card className="w-full rounded-2xl shadow-md border">
+    <Card className="w-full rounded-2xl shadow-md border min-h-[220px]">
       <CardHeader className="flex flex-row  justify-between ">
         <div className="flex items-center gap-3">
           <Wallet className="w-8 h-8" />
@@ -44,7 +110,7 @@ export default function WalletCard({
           </div>
         </div>
         <div>
-          <EditWalletDialog wallets={{ id, name }} />
+          <EditWalletDialog wallets={{ id, name, type, brand, color, limit, billingDay: billingDay ?? undefined }} />
           <DeleteWalletDialog id={id} />
         </div>
       </CardHeader>
@@ -73,33 +139,7 @@ export default function WalletCard({
         </p>
       </CardContent>
 
-      <CardFooter className="flex flex-wrap pt-4  text-sm gap-6">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-chart-2 rounded-lg">
-            <ArrowUp className="text-white" />
-          </div>
-
-          <div>
-            <p className="font-medium text-lg break-words">
-              {formatCurrency(totalIncome)}
-            </p>
-            <span className="text-sm text-gray-400">Entradas</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-primary rounded-lg">
-            <ArrowDown className="text-white" />
-          </div>
-
-          <div>
-            <p className=" font-medium text-lg break-words">
-              {formatCurrency(totalExpense)}
-            </p>
-            <span className="text-sm text-gray-400">Saídas</span>
-          </div>
-        </div>
-      </CardFooter>
+      {/* Rodapé removido para manter altura igual aos cartões */}
     </Card>
   );
 }

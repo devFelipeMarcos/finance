@@ -32,6 +32,14 @@ export async function GET(req: Request) {
         });
 
         const result = wallets.map((wallet) => {
+          const w = wallet as {
+            type?: "wallet" | "credit_card";
+            brand?: "visa" | "mastercard" | "amex" | "elo" | "hipercard" | "diners" | "discover";
+            color?: string | null;
+            limit?: number | null;
+            billingDay?: number | null;
+            displayNumber?: string | null;
+          };
           const filteredTransactions =
             month && year
               ? walletsFilterByMonthYear(wallet.transactions, month, year)
@@ -60,6 +68,12 @@ export async function GET(req: Request) {
           return {
             id: wallet.id,
             name: wallet.name,
+            type: w.type,
+            brand: w.brand,
+            color: w.color ?? undefined,
+            limit: (w.limit ?? 0) as number,
+            billingDay: (w.billingDay ?? null) as number | null,
+            displayNumber: (w.displayNumber ?? null) as string | null,
             totalIncome: totalIncomePeriod,
             totalExpense: totalExpensePeriod,
             balance: totalIncomeAllTime - totalExpenseAllTime,
@@ -107,6 +121,14 @@ export async function GET(req: Request) {
       });
 
       const result = wallets.map((wallet) => {
+        const w = wallet as {
+          type?: "wallet" | "credit_card";
+          brand?: "visa" | "mastercard" | "amex" | "elo" | "hipercard" | "diners" | "discover";
+          color?: string | null;
+          limit?: number | null;
+          billingDay?: number | null;
+          displayNumber?: string | null;
+        };
         const filteredTransactions =
           month && year
             ? walletsFilterByMonthYear(wallet.transactions, month, year)
@@ -135,6 +157,12 @@ export async function GET(req: Request) {
         return {
           id: wallet.id,
           name: wallet.name,
+          type: w.type,
+          brand: w.brand,
+          color: w.color ?? undefined,
+          limit: (w.limit ?? 0) as number,
+          billingDay: (w.billingDay ?? null) as number | null,
+          displayNumber: (w.displayNumber ?? null) as string | null,
           totalIncome: totalIncomePeriod,
           totalExpense: totalExpensePeriod,
           balance: totalIncomeAllTime - totalExpenseAllTime,
@@ -184,12 +212,11 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name } = walletSchema.parse(body);
+    const parsed = walletSchema.parse(body);
 
-    // Verifica se o usuário já tem uma carteira com esse nome
     const existingWallet = await prisma.wallet.findFirst({
       where: {
-        name,
+        name: parsed.name,
         userId: user.id,
       },
     });
@@ -201,10 +228,23 @@ export async function POST(req: Request) {
       );
     }
 
+    const isCard = (parsed as any).type === "credit_card";
+    const cardData = isCard
+      ? {
+          type: "credit_card" as const,
+          brand: (parsed as any).brand,
+          color: (parsed as any).color,
+          limit: (parsed as any).limit,
+          billingDay: (parsed as any).billingDay,
+          displayNumber: generateCardDisplayNumber(),
+        }
+      : { type: "wallet" as const };
+
     const wallet = await prisma.wallet.create({
       data: {
-        name,
+        name: parsed.name,
         userId: user.id,
+        ...cardData,
       },
     });
 
@@ -218,6 +258,12 @@ export async function POST(req: Request) {
   }
 }
 
+function generateCardDisplayNumber() {
+  const segments = Array.from({ length: 4 }).map(() =>
+    Math.floor(1000 + Math.random() * 9000).toString()
+  );
+  return segments.join(" ");
+}
 function walletsFilterByMonthYear<T extends { date: Date | string }>(
   transactions: T[],
   month: string | null,

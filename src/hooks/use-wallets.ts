@@ -26,7 +26,7 @@ export function useWalllets({ month, year }: UseWalletsProps = {}) {
 
   // CREATE
   const createWallets = useMutation({
-    mutationFn: async (wallets: Pick<Wallets, "name">) => {
+    mutationFn: async (wallets: Partial<Wallets> & { type?: "wallet" | "credit_card" }) => {
       const res = await fetch("/api/wallets", {
         method: "POST",
         body: JSON.stringify(wallets),
@@ -42,7 +42,7 @@ export function useWalllets({ month, year }: UseWalletsProps = {}) {
 
   //UPDATE
   const updateWallets = useMutation({
-    mutationFn: async (wallets: Pick<Wallets, "id" | "name">) => {
+    mutationFn: async (wallets: Partial<Wallets> & { id: string; type?: "wallet" | "credit_card" }) => {
       const res = await fetch(`/api/wallets/${wallets.id}`, {
         method: "PUT",
         body: JSON.stringify(wallets),
