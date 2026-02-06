@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth-options";
 import { getServerSession } from "next-auth/next";
-import { walletSchema } from "@/lib/schemas/wallet-schema";
+import { walletSchema, WalletsFormData } from "@/lib/schemas/wallet-schema";
 
 // GET - detalhe de uma cartira
 export async function GET(
@@ -41,20 +41,20 @@ export async function PUT(
   }
 
   const body = await req.json();
-  const parsed = walletSchema.parse(body);
+  const parsed = walletSchema.parse(body) as WalletsFormData;
 
   try {
     const wallets = await prisma.wallet.update({
       where: { id },
       data: {
         name: parsed.name,
-        ...(parsed as any).type === "credit_card"
+        ...(("type" in parsed && parsed.type === "credit_card")
           ? {
               type: "credit_card" as const,
-              brand: (parsed as any).brand,
-              color: (parsed as any).color,
-              limit: (parsed as any).limit,
-              billingDay: (parsed as any).billingDay,
+              brand: (parsed as Extract<WalletsFormData, { type: "credit_card" }>).brand,
+              color: (parsed as Extract<WalletsFormData, { type: "credit_card" }>).color,
+              limit: (parsed as Extract<WalletsFormData, { type: "credit_card" }>).limit,
+              billingDay: (parsed as Extract<WalletsFormData, { type: "credit_card" }>).billingDay,
             }
           : {
               type: "wallet" as const,
@@ -62,7 +62,7 @@ export async function PUT(
               color: null,
               limit: null,
               billingDay: null,
-            },
+            })
       },
     });
 

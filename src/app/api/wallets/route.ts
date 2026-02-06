@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth-options";
 import { getServerSession } from "next-auth/next";
-import { walletSchema } from "@/lib/schemas/wallet-schema";
+import { walletSchema, WalletsFormData } from "@/lib/schemas/wallet-schema";
 
 export async function GET(req: Request) {
   try {
@@ -212,7 +212,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const parsed = walletSchema.parse(body);
+    const parsed = walletSchema.parse(body) as WalletsFormData;
 
     const existingWallet = await prisma.wallet.findFirst({
       where: {
@@ -228,14 +228,14 @@ export async function POST(req: Request) {
       );
     }
 
-    const isCard = (parsed as any).type === "credit_card";
+    const isCard = "type" in parsed && parsed.type === "credit_card";
     const cardData = isCard
       ? {
           type: "credit_card" as const,
-          brand: (parsed as any).brand,
-          color: (parsed as any).color,
-          limit: (parsed as any).limit,
-          billingDay: (parsed as any).billingDay,
+          brand: (parsed as Extract<WalletsFormData, { type: "credit_card" }>).brand,
+          color: (parsed as Extract<WalletsFormData, { type: "credit_card" }>).color,
+          limit: (parsed as Extract<WalletsFormData, { type: "credit_card" }>).limit,
+          billingDay: (parsed as Extract<WalletsFormData, { type: "credit_card" }>).billingDay,
           displayNumber: generateCardDisplayNumber(),
         }
       : { type: "wallet" as const };

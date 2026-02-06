@@ -2,11 +2,10 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowDown, ArrowUp, Wallet, CreditCard } from "lucide-react";
+import { Wallet, CreditCard } from "lucide-react";
 import { EditWalletDialog } from "@/app/app/wallet/components/edit-wallet-dialog";
 import { formatCurrency } from "@/utils/format-currency";
 import { DeleteWalletDialog } from "./delete-wallet-dialog";
@@ -43,7 +42,6 @@ export default function WalletCard({
   balance,
   lastTransaction,
   totalExpense,
-  totalIncome,
 }: WalletCardProps) {
   const isCard = type === "credit_card";
   if (isCard) {

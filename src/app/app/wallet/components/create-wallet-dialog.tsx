@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { WalletsFormData, walletSchema } from "@/lib/schemas/wallet-schema";
 import { useForm } from "react-hook-form";
+import type { Path, PathValue } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useWalllets } from "@/hooks/use-wallets";
@@ -37,12 +38,12 @@ export function WalletDialog() {
     resolver: zodResolver(walletSchema),
     defaultValues: {
       name: "",
-      type: "wallet" as any,
+      type: "wallet",
     },
   });
   const [limitDisplay, setLimitDisplay] = React.useState("R$ 0,00");
   const presetColors = ["#6b21a8", "#2563eb", "#16a34a", "#ef4444", "#f59e0b", "#0ea5e9", "#4b5563"];
-  const selectedColor = watch("color" as any) as string | undefined;
+  const selectedColor = watch("color") as unknown as string | undefined;
 
   function formatCurrencyBRLInput(raw: string) {
     const onlyDigits = raw.replace(/\D/g, "");
@@ -55,25 +56,20 @@ export function WalletDialog() {
     setLimitDisplay(formatted);
     const digits = e.target.value.replace(/\D/g, "");
     const amount = Number(digits || "0") / 100;
-    setValue("limit" as any, amount, { shouldValidate: true });
+    setValue("limit", amount, { shouldValidate: true });
   }
 
   function onSubmit(formData: WalletsFormData) {
-    createWallets.mutate(
-      {
-        ...(formData as any),
+    createWallets.mutate(formData, {
+      onSuccess: () => {
+        toast.success("Cartaira criada");
+        setOpen(false);
+        reset();
       },
-      {
-        onSuccess: () => {
-          toast.success("Cartaira criada");
-          setOpen(false);
-          reset();
-        },
-        onError: () => {
-          toast.error("Erro ao criar carteira");
-        },
-      }
-    );
+      onError: () => {
+        toast.error("Erro ao criar carteira");
+      },
+    });
   }
 
   return (
@@ -94,8 +90,8 @@ export function WalletDialog() {
           <div className="grid gap-3">
             <Label>Tipo</Label>
             <RadioGroup
-              value={watch("type" as any) as any}
-              onValueChange={(v) => setValue("type" as any, v as any)}
+              value={(watch("type") as unknown as string) ?? "wallet"}
+              onValueChange={(v) => setValue("type", v as unknown as WalletsFormData["type"])}
               className="flex gap-4"
             >
               <div className="flex items-center space-x-2">
@@ -109,16 +105,23 @@ export function WalletDialog() {
             </RadioGroup>
             <Label htmlFor="description">Nome</Label>
             <Input id="name" {...register("name")} disabled={isSubmitting} />
-            {errors && (errors as any).name && (
+            {errors && (errors as Record<string, { message?: string }>).name && (
               <span className="text-destructive text-sm">
-                {(errors as any).name.message}
+                {(errors as Record<string, { message?: string }>).name?.message}
               </span>
             )}
-            {watch("type" as any) === "credit_card" && (
+            {(watch("type") as unknown as string) === "credit_card" && (
               <>
             <div className="grid gap-2">
               <Label>Marca do cartão</Label>
-              <Select onValueChange={(v) => setValue("brand" as any, v)}>
+              <Select
+                onValueChange={(v) =>
+                  setValue(
+                    "brand" as unknown as Path<WalletsFormData>,
+                    v as unknown as PathValue<WalletsFormData, Path<WalletsFormData>>
+                  )
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a bandeira" />
                 </SelectTrigger>
@@ -132,9 +135,9 @@ export function WalletDialog() {
                   <SelectItem value="discover">Discover</SelectItem>
                 </SelectContent>
               </Select>
-              {(errors as any)?.brand && (
+              {(errors as Record<string, { message?: string }>)?.brand && (
                 <span className="text-destructive text-sm">
-                  {(errors as any).brand.message}
+                  {(errors as Record<string, { message?: string }>).brand?.message}
                 </span>
               )}
             </div>
@@ -150,19 +153,19 @@ export function WalletDialog() {
                     aria-label={`Selecionar cor ${c}`}
                     className={`w-8 h-8 rounded-full border cursor-pointer ${selectedColor === c ? "ring-2 ring-white" : ""}`}
                     style={{ background: c }}
-                    onClick={() => setValue("color" as any, c, { shouldValidate: true })}
-                    onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setValue("color" as any, c, { shouldValidate: true })}
+                    onClick={() => setValue("color", c, { shouldValidate: true })}
+                    onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setValue("color", c, { shouldValidate: true })}
                   />
                 ))}
                 <Input
                   type="color"
                   className="w-10 h-10 p-1 rounded-md"
-                  onChange={(e) => setValue("color" as any, e.target.value, { shouldValidate: true })}
+                  onChange={(e) => setValue("color", e.target.value, { shouldValidate: true })}
                 />
               </div>
-              {(errors as any)?.color && (
+              {(errors as Record<string, { message?: string }>)?.color && (
                 <span className="text-destructive text-sm">
-                  {(errors as any).color.message}
+                  {(errors as Record<string, { message?: string }>).color?.message}
                 </span>
               )}
             </div>
@@ -174,18 +177,18 @@ export function WalletDialog() {
                 onChange={handleLimitChange}
                 placeholder="R$ 0,00"
               />
-              {(errors as any)?.limit && (
+              {(errors as Record<string, { message?: string }>)?.limit && (
                 <span className="text-destructive text-sm">
-                  {(errors as any).limit.message}
+                  {(errors as Record<string, { message?: string }>).limit?.message}
                 </span>
               )}
             </div>
             <div className="grid gap-2">
               <Label>Dia de vencimento</Label>
               <Input type="number" {...register("billingDay", { valueAsNumber: true })} />
-              {(errors as any)?.billingDay && (
+              {(errors as Record<string, { message?: string }>)?.billingDay && (
                 <span className="text-destructive text-sm">
-                  {(errors as any).billingDay.message}
+                  {(errors as Record<string, { message?: string }>).billingDay?.message}
                 </span>
               )}
             </div>

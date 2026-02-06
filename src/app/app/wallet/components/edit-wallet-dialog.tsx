@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useWalllets } from "@/hooks/use-wallets";
 import { useForm } from "react-hook-form";
+import type { Path, PathValue } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { WalletsFormData, walletSchema } from "@/lib/schemas/wallet-schema";
@@ -47,7 +48,7 @@ export function EditWalletDialog({ wallets }: EditWalletsDialog) {
     resolver: zodResolver(walletSchema),
     defaultValues: {
       name: wallets.name,
-      type: (wallets.type ?? "wallet") as any,
+      type: wallets.type ?? "wallet",
       brand: wallets.brand,
       color: wallets.color,
       limit: wallets.limit,
@@ -58,7 +59,7 @@ export function EditWalletDialog({ wallets }: EditWalletsDialog) {
     (wallets.limit ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
   );
   const presetColors = ["#6b21a8", "#2563eb", "#16a34a", "#ef4444", "#f59e0b", "#0ea5e9", "#4b5563"];
-  const selectedColor = watch("color" as any) as string | undefined;
+  const selectedColor = watch("color") as unknown as string | undefined;
 
   function formatCurrencyBRLInput(raw: string) {
     const onlyDigits = raw.replace(/\D/g, "");
@@ -71,20 +72,20 @@ export function EditWalletDialog({ wallets }: EditWalletsDialog) {
     setLimitDisplay(formatted);
     const digits = e.target.value.replace(/\D/g, "");
     const amount = Number(digits || "0") / 100;
-    setValue("limit" as any, amount, { shouldValidate: true });
+    setValue("limit", amount, { shouldValidate: true });
   }
 
   function onSubmit(formData: WalletsFormData) {
     const payload =
-      (formData as any).type === "credit_card"
+      ("type" in formData && formData.type === "credit_card")
         ? {
             id: wallets.id,
             name: formData.name,
             type: "credit_card" as const,
-            brand: (formData as any).brand,
-            color: (formData as any).color,
-            limit: (formData as any).limit,
-            billingDay: (formData as any).billingDay,
+            brand: (formData as Extract<WalletsFormData, { type: "credit_card" }>).brand,
+            color: (formData as Extract<WalletsFormData, { type: "credit_card" }>).color,
+            limit: (formData as Extract<WalletsFormData, { type: "credit_card" }>).limit,
+            billingDay: (formData as Extract<WalletsFormData, { type: "credit_card" }>).billingDay,
           }
         : {
             id: wallets.id,
@@ -92,7 +93,7 @@ export function EditWalletDialog({ wallets }: EditWalletsDialog) {
             type: "wallet" as const,
           };
 
-    updateWallets.mutate(payload as any, {
+    updateWallets.mutate(payload, {
       onSuccess: () => {
         toast.success("Carteira atualizada");
         setOpen(false);
@@ -119,8 +120,8 @@ export function EditWalletDialog({ wallets }: EditWalletsDialog) {
           <div className="grid gap-3">
             <Label>Tipo</Label>
             <RadioGroup
-              value={watch("type" as any) as any}
-              onValueChange={(v) => setValue("type" as any, v as any)}
+              value={(watch("type") as unknown as string) ?? "wallet"}
+              onValueChange={(v) => setValue("type", v as unknown as WalletsFormData["type"])}
               className="flex gap-4"
             >
               <div className="flex items-center space-x-2">
@@ -134,16 +135,23 @@ export function EditWalletDialog({ wallets }: EditWalletsDialog) {
             </RadioGroup>
             <Label htmlFor="description">Nome da carteira</Label>
             <Input id="name" {...register("name")} disabled={isSubmitting} />
-            {errors && (errors as any).name && (
+            {errors && (errors as Record<string, { message?: string }>).name && (
               <span className="text-destructive text-sm">
-                {(errors as any).name.message}
+                {(errors as Record<string, { message?: string }>).name?.message}
               </span>
             )}
-            {watch("type" as any) === "credit_card" && (
+            {(watch("type") as unknown as string) === "credit_card" && (
               <>
             <div className="grid gap-2">
               <Label>Marca do cartão</Label>
-              <Select onValueChange={(v) => setValue("brand" as any, v)}>
+              <Select
+                onValueChange={(v) =>
+                  setValue(
+                    "brand" as unknown as Path<WalletsFormData>,
+                    v as unknown as PathValue<WalletsFormData, Path<WalletsFormData>>
+                  )
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a bandeira" />
                 </SelectTrigger>
@@ -157,9 +165,9 @@ export function EditWalletDialog({ wallets }: EditWalletsDialog) {
                   <SelectItem value="discover">Discover</SelectItem>
                 </SelectContent>
               </Select>
-              {(errors as any)?.brand && (
+              {(errors as Record<string, { message?: string }>)?.brand && (
                 <span className="text-destructive text-sm">
-                  {(errors as any).brand.message}
+                  {(errors as Record<string, { message?: string }>).brand?.message}
                 </span>
               )}
             </div>
@@ -175,20 +183,20 @@ export function EditWalletDialog({ wallets }: EditWalletsDialog) {
                     aria-label={`Selecionar cor ${c}`}
                     className={`w-8 h-8 rounded-full border cursor-pointer ${selectedColor === c ? "ring-2 ring-white" : ""}`}
                     style={{ background: c }}
-                    onClick={() => setValue("color" as any, c, { shouldValidate: true })}
-                    onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setValue("color" as any, c, { shouldValidate: true })}
+                    onClick={() => setValue("color", c, { shouldValidate: true })}
+                    onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setValue("color", c, { shouldValidate: true })}
                   />
                 ))}
                 <Input
                   type="color"
                   className="w-10 h-10 p-1 rounded-md"
                   defaultValue={wallets.color}
-                  onChange={(e) => setValue("color" as any, e.target.value, { shouldValidate: true })}
+                  onChange={(e) => setValue("color", e.target.value, { shouldValidate: true })}
                 />
               </div>
-              {(errors as any)?.color && (
+              {(errors as Record<string, { message?: string }>)?.color && (
                 <span className="text-destructive text-sm">
-                  {(errors as any).color.message}
+                  {(errors as Record<string, { message?: string }>).color?.message}
                 </span>
               )}
             </div>
@@ -200,18 +208,18 @@ export function EditWalletDialog({ wallets }: EditWalletsDialog) {
                 onChange={handleLimitChange}
                 placeholder="R$ 0,00"
               />
-              {(errors as any)?.limit && (
+              {(errors as Record<string, { message?: string }>)?.limit && (
                 <span className="text-destructive text-sm">
-                  {(errors as any).limit.message}
+                  {(errors as Record<string, { message?: string }>).limit?.message}
                 </span>
               )}
             </div>
             <div className="grid gap-2">
               <Label>Dia de vencimento</Label>
               <Input type="number" {...register("billingDay", { valueAsNumber: true })} />
-              {(errors as any)?.billingDay && (
+              {(errors as Record<string, { message?: string }>)?.billingDay && (
                 <span className="text-destructive text-sm">
-                  {(errors as any).billingDay.message}
+                  {(errors as Record<string, { message?: string }>).billingDay?.message}
                 </span>
               )}
             </div>
