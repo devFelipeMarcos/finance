@@ -109,8 +109,8 @@ export async function POST(req: Request) {
         );
       }
 
-      let walletIdInput = body.walletId as string | undefined;
-      let wallet = null as any;
+      const walletIdInput = body.walletId as string | undefined;
+      let wallet: { id: string; userId: string } | null = null;
       if (walletIdInput) {
         const w = await prisma.wallet.findUnique({ where: { id: walletIdInput } });
         if (w && w.userId === user.id) {
@@ -168,7 +168,7 @@ export async function POST(req: Request) {
       }
 
       const typeRaw = String(body.typeTransaction ?? body.type ?? "").toLowerCase();
-      let type: "income" | "expense" =
+      const type: "income" | "expense" =
         typeRaw === "income" || typeRaw === "receita"
           ? "income"
           : typeRaw === "expense" || typeRaw === "despesa"
