@@ -1,8 +1,4 @@
-import { ChartAreaFinance } from "./components/chart-area-interactive";
-import { ChartPieDonut } from "./components/chart-pie-donut";
-import { TransactionsTable } from "@/app/app/dashboard/components/transactions-table";
-import Summary from "./components/summary";
-import { PeriodFilterHeader } from "@/components/period-filter-header";
+import DashboardContent from "./components/dashboard-content";
 
 export const metadata = {
   title: "Dashboard | Balancefy",
@@ -11,23 +7,7 @@ export const metadata = {
 };
 
 const Dashboard = () => {
-  return (
-    <div className="w-full h-full flex flex-col gap-4">
-      <PeriodFilterHeader title="Dashboard financeiro" />
-      <Summary />
-      <section className="w-full grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="lg:col-span-2 xl:col-span-1 ">
-          <ChartPieDonut />
-        </div>
-        <div className="lg:col-span-2 xl:col-span-3 ">
-          <ChartAreaFinance />
-        </div>
-      </section>
-      <section>
-        <TransactionsTable />
-      </section>
-    </div>
-  );
+  return <DashboardContent />;
 };
 
 export default Dashboard;

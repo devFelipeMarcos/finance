@@ -64,14 +64,14 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function ChartAreaFinance() {
+export function ChartAreaFinance({ walletIds }: { walletIds?: string[] }) {
   const { mode } = usePeriod();
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
 
   const { transactions, isLoading } = useTransactions(
-    mode === "month" ? { month, year } : undefined
+    mode === "month" ? { month, year, walletIds } : { walletIds }
   );
 
   const chartData = groupTransactionsByMonth(transactions || []);

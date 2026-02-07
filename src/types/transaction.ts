@@ -15,7 +15,7 @@ export type Transaction = {
   id: string;
   description: string;
   value: number;
-  type: "income" | "expense";
+  type: "income" | "expense" | "to_receive" | "to_pay";
   date: Date;
   categoryId: string;
   category: Category;

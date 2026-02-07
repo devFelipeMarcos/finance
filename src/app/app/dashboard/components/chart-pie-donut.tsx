@@ -45,14 +45,14 @@ function groupTransactions(transactions: Transaction[]) {
   }));
 }
 
-export function ChartPieDonut() {
+export function ChartPieDonut({ walletIds }: { walletIds?: string[] }) {
   const { mode } = usePeriod();
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
 
   const { transactions, isLoading } = useTransactions(
-    mode === "month" ? { month, year } : undefined
+    mode === "month" ? { month, year, walletIds } : { walletIds }
   );
 
   const chartData = groupTransactions(transactions ?? []);

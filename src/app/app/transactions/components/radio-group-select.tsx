@@ -1,7 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-type Tipo = "income" | "expense";
+type Tipo = "income" | "expense" | "to_receive" | "to_pay";
 
 type RadioGroupDemoProps = {
   value: Tipo;
@@ -23,6 +23,14 @@ export function RadioGroupSelect({
         <div className="flex items-center gap-3">
           <RadioGroupItem value="expense" id="r2" />
           <Label htmlFor="r2">Saída</Label>
+        </div>
+        <div className="flex items-center gap-3">
+          <RadioGroupItem value="to_receive" id="r3" />
+          <Label htmlFor="r3">A Receber</Label>
+        </div>
+        <div className="flex items-center gap-3">
+          <RadioGroupItem value="to_pay" id="r4" />
+          <Label htmlFor="r4">A Pagar</Label>
         </div>
       </div>
     </RadioGroup>

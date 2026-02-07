@@ -15,7 +15,7 @@ export const transactionSchema = z.object({
   categoryId: z.string().min(1, "Selecione uma categoria válida"),
   walletId: z.string().min(1, "Seleicione uma carteira válida"),
 
-  type: z.enum(["income", "expense"], { message: "Select a valid type" }),
+  type: z.enum(["income", "expense", "to_receive", "to_pay"], { message: "Select a valid type" }),
 
   date: z.date("Selecione uma data válida"),
 });

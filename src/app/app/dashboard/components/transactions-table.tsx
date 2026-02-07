@@ -101,12 +101,18 @@ export const columns = (
           ? "Entrada"
           : type === "expense"
           ? "Saída"
+          : type === "to_receive"
+          ? "A Receber"
+          : type === "to_pay"
+          ? "A Pagar"
           : "Desconhecido";
 
       return (
         <span
           className={
             type === "income"
+              ? "text-chart-2 font-medium"
+              : type === "to_receive"
               ? "text-chart-2 font-medium"
               : "text-destructive font-medium"
           }
@@ -214,14 +220,14 @@ export const columns = (
   },
 ];
 
-export function TransactionsTable() {
+export function TransactionsTable({ walletIds }: { walletIds?: string[] }) {
   const { mode } = usePeriod();
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
 
   const { transactions, deleteTransaction, isLoading } = useTransactions(
-    mode === "month" ? { month, year } : undefined
+    mode === "month" ? { month, year, walletIds } : { walletIds }
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);

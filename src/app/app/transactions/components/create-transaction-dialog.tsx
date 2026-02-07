@@ -28,6 +28,7 @@ import { SelectCategory } from "./select-category";
 import { SelectWallet } from "./select-wallet";
 import { DateDialog } from "./date-dialog";
 import { RadioGroupSelect } from "./radio-group-select";
+import { formatCurrencyBRLInput, parseCurrencyBRL, formatCurrencyBRL } from "@/utils/currency-input";
 
 export function TransactionDialog() {
   const { createTransaction } = useTransactions();
@@ -55,6 +56,7 @@ export function TransactionDialog() {
     register,
     handleSubmit,
     control,
+    setValue,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<TransactionFormData>({
@@ -68,6 +70,14 @@ export function TransactionDialog() {
       date: new Date(),
     },
   });
+  const [valueDisplay, setValueDisplay] = React.useState(formatCurrencyBRL(0));
+
+  function handleValueChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const formatted = formatCurrencyBRLInput(e.target.value);
+    setValueDisplay(formatted);
+    const amount = parseCurrencyBRL(formatted);
+    setValue("value", amount, { shouldValidate: true });
+  }
 
   function onSubmit(formData: TransactionFormData) {
     createTransaction.mutate(
@@ -82,14 +92,14 @@ export function TransactionDialog() {
       {
         onSuccess: () => {
           toast.success("Transação criada");
+          setValueDisplay(formatCurrencyBRL(0));
+          reset();
         },
         onError: () => {
           toast.error("Erro ao criar transação");
         },
       }
     );
-
-    reset();
   }
 
   return (
@@ -100,7 +110,7 @@ export function TransactionDialog() {
             <Plus /> <p className="hidden md:block ">Nova Transação</p>
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-xl md:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Adicionar Transação</DialogTitle>
             <DialogDescription>
@@ -119,11 +129,7 @@ export function TransactionDialog() {
             </div>
             <div className="grid gap-3">
               <Label htmlFor="valor">Valor</Label>
-              <Input
-                id="valor"
-                type="number"
-                {...register("value", { valueAsNumber: true })}
-              />
+              <Input id="valor" inputMode="numeric" value={valueDisplay} onChange={handleValueChange} />
               {errors.value && (
                 <span className="text-destructive text-sm">
                   {errors.value.message}

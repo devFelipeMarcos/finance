@@ -168,11 +168,15 @@ export async function POST(req: Request) {
       }
 
       const typeRaw = String(body.typeTransaction ?? body.type ?? "").toLowerCase();
-      const type: "income" | "expense" =
+      const type: "income" | "expense" | "to_receive" | "to_pay" =
         typeRaw === "income" || typeRaw === "receita"
           ? "income"
           : typeRaw === "expense" || typeRaw === "despesa"
           ? "expense"
+          : typeRaw === "to_receive" || typeRaw === "a_receber" || typeRaw === "receber"
+          ? "to_receive"
+          : typeRaw === "to_pay" || typeRaw === "a_pagar" || typeRaw === "pagar"
+          ? "to_pay"
           : "expense";
 
       const transaction = await prisma.transaction.create({

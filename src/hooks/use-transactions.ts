@@ -4,14 +4,16 @@ import { Transaction } from "@/types/transaction";
 type UseTransactionsProps = {
   month?: number;
   year?: number;
+  walletId?: string;
+  walletIds?: string[];
 };
 
-export function useTransactions({ month, year }: UseTransactionsProps = {}) {
+export function useTransactions({ month, year, walletId, walletIds }: UseTransactionsProps = {}) {
   const queryClient = useQueryClient();
 
   // GET
 
-  const queryKey = ["transactions", { month, year }];
+  const queryKey = ["transactions", { month, year, walletId, walletIds }];
 
   const { data, isLoading, error } = useQuery<Transaction[]>({
     queryKey,
@@ -24,7 +26,12 @@ export function useTransactions({ month, year }: UseTransactionsProps = {}) {
 
       const res = await fetch(url);
       if (!res.ok) throw new Error("Erro ao buscar transações");
-      return res.json();
+      const json: Transaction[] = await res.json();
+      if (walletIds && walletIds.length > 0) {
+        const set = new Set(walletIds);
+        return json.filter((t) => set.has(t.walletId));
+      }
+      return walletId ? json.filter((t) => t.walletId === walletId) : json;
     },
   });
 

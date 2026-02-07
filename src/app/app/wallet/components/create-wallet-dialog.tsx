@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { useWalllets } from "@/hooks/use-wallets";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { formatCurrencyBRLInput, parseCurrencyBRL, formatCurrencyBRL } from "@/utils/currency-input";
 
 export function WalletDialog() {
   const { createWallets } = useWalllets();
@@ -41,21 +42,14 @@ export function WalletDialog() {
       type: "wallet",
     },
   });
-  const [limitDisplay, setLimitDisplay] = React.useState("R$ 0,00");
+  const [limitDisplay, setLimitDisplay] = React.useState(formatCurrencyBRL(0));
   const presetColors = ["#6b21a8", "#2563eb", "#16a34a", "#ef4444", "#f59e0b", "#0ea5e9", "#4b5563"];
   const selectedColor = watch("color") as unknown as string | undefined;
-
-  function formatCurrencyBRLInput(raw: string) {
-    const onlyDigits = raw.replace(/\D/g, "");
-    const number = Number(onlyDigits || "0") / 100;
-    return number.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-  }
 
   function handleLimitChange(e: React.ChangeEvent<HTMLInputElement>) {
     const formatted = formatCurrencyBRLInput(e.target.value);
     setLimitDisplay(formatted);
-    const digits = e.target.value.replace(/\D/g, "");
-    const amount = Number(digits || "0") / 100;
+    const amount = parseCurrencyBRL(formatted);
     setValue("limit", amount, { shouldValidate: true });
   }
 

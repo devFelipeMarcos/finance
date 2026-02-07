@@ -30,6 +30,7 @@ import { SelectWallet } from "./select-wallet";
 import { SelectCategory } from "./select-category";
 import { DateDialog } from "./date-dialog";
 import { RadioGroupSelect } from "./radio-group-select";
+import { formatCurrencyBRLInput, parseCurrencyBRL, formatCurrencyBRL } from "@/utils/currency-input";
 
 type EditTransactionDialogProps = {
   transaction: Transaction;
@@ -63,6 +64,7 @@ export function EditTransactionDialog({
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
@@ -75,6 +77,16 @@ export function EditTransactionDialog({
       date: new Date(transaction.date),
     },
   });
+  const [valueDisplay, setValueDisplay] = React.useState(
+    formatCurrencyBRL(transaction.value)
+  );
+
+  function handleValueChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const formatted = formatCurrencyBRLInput(e.target.value);
+    setValueDisplay(formatted);
+    const amount = parseCurrencyBRL(formatted);
+    setValue("value", amount, { shouldValidate: true });
+  }
 
   function onSubmit(formData: TransactionFormData) {
     updateTransaction.mutate(
@@ -131,11 +143,7 @@ export function EditTransactionDialog({
             </div>
             <div className="grid gap-3">
               <Label htmlFor="valor">Valor</Label>
-              <Input
-                id="valor"
-                type="number"
-                {...register("value", { valueAsNumber: true })}
-              />
+              <Input id="valor" inputMode="numeric" value={valueDisplay} onChange={handleValueChange} />
               {errors.value && (
                 <span className="text-destructive text-sm">
                   {errors.value.message}

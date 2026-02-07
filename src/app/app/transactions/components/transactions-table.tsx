@@ -102,12 +102,18 @@ export const columns = (
           ? "Entrada"
           : type === "expense"
           ? "Saída"
+          : type === "to_receive"
+          ? "A Receber"
+          : type === "to_pay"
+          ? "A Pagar"
           : "Desconhecido";
 
       return (
         <span
           className={
             type === "income"
+              ? "text-chart-2 font-medium"
+              : type === "to_receive"
               ? "text-chart-2 font-medium"
               : "text-destructive font-medium"
           }

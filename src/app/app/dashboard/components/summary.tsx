@@ -21,17 +21,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSummaryMonth } from "@/hooks/use-summary-month";
 import { usePeriod } from "@/context/period-context";
 
-const Summary = () => {
+type SummaryProps = { walletIds?: string[] };
+const Summary = ({ walletIds }: SummaryProps) => {
   const { mode } = usePeriod();
 
-  const { incomeAll, expenseAll, balanceAll, economyAll } = useSummaryAll();
-  const { incomeMonth, expenseMonth, economyMonth } = useSummaryMonth();
+  const { incomeAll, expenseAll, balanceAll, economyAll, toReceiveAll, toPayAll } = useSummaryAll(walletIds);
+  const { incomeMonth, expenseMonth, economyMonth, toReceiveMonth, toPayMonth } = useSummaryMonth(walletIds);
 
   // Escolhe qual conjunto de dados exibir com base no modo
   const income = mode === "month" ? incomeMonth : incomeAll;
   const expense = mode === "month" ? expenseMonth : expenseAll;
   const balance = mode === "month" ? balanceAll : balanceAll;
   const economy = mode === "month" ? economyMonth : economyAll;
+  const toReceive = mode === "month" ? toReceiveMonth : toReceiveAll;
+  const toPay = mode === "month" ? toPayMonth : toPayAll;
+  const futureBalance = toReceive - toPay;
 
   const { isLoading } = useTransactions();
 
@@ -54,7 +58,7 @@ const Summary = () => {
         <CardContent>
           <p
             className={`text-4xl font-bold break-words ${
-              balance < 0 ? "text-primary" : "text-chart-2"
+              balance < 0 ? "text-red-500" : "text-green-500"
             }`}
           >
             {formatCurrency(balance)}
@@ -143,6 +147,91 @@ const Summary = () => {
             <p>Tendências no mês de {dateToday}</p>
           ) : (
             <p>Tendências em todo o período</p>
+          )}
+        </CardFooter>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Valor a Receber</CardTitle>
+          <CardDescription>
+            {mode === "month" ? (
+              <p>Total previsto para receber no mês</p>
+            ) : (
+              <p>Total previsto para receber no período</p>
+            )}
+          </CardDescription>
+          <CardAction>
+            <DollarSign />
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          <p className="text-4xl font-bold break-words text-green-500">
+            {formatCurrency(toReceive)}
+          </p>
+        </CardContent>
+        <CardFooter>
+          {mode === "month" ? (
+            <p>Tendências no mês de {dateToday}</p>
+          ) : (
+            <p>Tendências em todo o período</p>
+          )}
+        </CardFooter>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Valor a Pagar</CardTitle>
+          <CardDescription>
+            {mode === "month" ? (
+              <p>Total previsto para pagar no mês</p>
+            ) : (
+              <p>Total previsto para pagar no período</p>
+            )}
+          </CardDescription>
+          <CardAction>
+            <TrendingDown />
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          <p className="text-4xl font-bold break-words text-red-500">
+            {formatCurrency(toPay)}
+          </p>
+        </CardContent>
+        <CardFooter>
+          {mode === "month" ? (
+            <p>Tendências no mês de {dateToday}</p>
+          ) : (
+            <p>Tendências em todo o período</p>
+          )}
+        </CardFooter>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Saldo Futuro</CardTitle>
+          <CardDescription>
+            {mode === "month" ? (
+              <p>Valor previsto que vai sobrar neste mês</p>
+            ) : (
+              <p>Valor previsto que vai sobrar no período</p>
+            )}
+          </CardDescription>
+          <CardAction>
+            <DollarSign />
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          <p
+            className={`text-4xl font-bold break-words ${
+              futureBalance < 0 ? "text-red-500" : "text-green-500"
+            }`}
+          >
+            {formatCurrency(futureBalance)}
+          </p>
+        </CardContent>
+        <CardFooter>
+          {mode === "month" ? (
+            <p>Baseado em Valor a Receber - Valor a Pagar do mês</p>
+          ) : (
+            <p>Baseado em Valor a Receber - Valor a Pagar do período</p>
           )}
         </CardFooter>
       </Card>
