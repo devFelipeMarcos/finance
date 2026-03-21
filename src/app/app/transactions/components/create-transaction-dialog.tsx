@@ -15,9 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 
-import { Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useTransactions } from "@/hooks/use-transactions";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   transactionSchema,
@@ -29,6 +28,7 @@ import { SelectWallet } from "./select-wallet";
 import { DateDialog } from "./date-dialog";
 import { RadioGroupSelect } from "./radio-group-select";
 import { formatCurrencyBRLInput, parseCurrencyBRL, formatCurrencyBRL } from "@/utils/currency-input";
+import { RecurringSelect } from "./recurring-select";
 
 export function TransactionDialog() {
   const { createTransaction } = useTransactions();
@@ -58,6 +58,8 @@ export function TransactionDialog() {
     control,
     setValue,
     reset,
+    watch,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
@@ -68,9 +70,13 @@ export function TransactionDialog() {
       walletId: "",
       type: "income",
       date: new Date(),
+      isRecurring: false,
+      recurringUntil: undefined,
     },
   });
+
   const [valueDisplay, setValueDisplay] = React.useState(formatCurrencyBRL(0));
+  const isRecurring = watch("isRecurring");
 
   function handleValueChange(e: React.ChangeEvent<HTMLInputElement>) {
     const formatted = formatCurrencyBRLInput(e.target.value);
@@ -80,18 +86,36 @@ export function TransactionDialog() {
   }
 
   function onSubmit(formData: TransactionFormData) {
+    const dataToSubmit = {
+      ...formData,
+      date: new Date(formData.date),
+      recurringUntil: formData.recurringUntil ? new Date(formData.recurringUntil) : null,
+    };
+    
+    const parsed = transactionSchema.safeParse(dataToSubmit);
+    if (!parsed.success) {
+      toast.error("Verifique os campos obrigatórios");
+      return;
+    }
+
     createTransaction.mutate(
       {
-        description: formData.description,
-        value: Number(formData.value),
-        type: formData.type,
-        date: new Date(formData.date),
-        categoryId: formData.categoryId,
-        walletId: formData.walletId,
+        description: parsed.data.description,
+        value: Number(parsed.data.value),
+        type: parsed.data.type,
+        date: parsed.data.date,
+        categoryId: parsed.data.categoryId,
+        walletId: parsed.data.walletId,
+        isRecurring: parsed.data.isRecurring,
+        recurringUntil: parsed.data.recurringUntil,
       },
       {
         onSuccess: () => {
-          toast.success("Transação criada");
+          toast.success(
+            formData.isRecurring
+              ? "Transações recorrentes criadas"
+              : "Transação criada"
+          );
           setValueDisplay(formatCurrencyBRL(0));
           reset();
         },
@@ -204,17 +228,36 @@ export function TransactionDialog() {
                 </span>
               )}
             </div>
+
+            <Controller
+              name="isRecurring"
+              control={control}
+              render={({ field }) => (
+                <RecurringSelect
+                  isRecurring={field.value}
+                  onIsRecurringChange={field.onChange}
+                  recurringUntil={watch("recurringUntil") ?? null}
+                  onRecurringUntilChange={(date) => setValue("recurringUntil", date)}
+                  selectedDay={getValues("date") instanceof Date ? getValues("date").getDate() : undefined}
+                />
+              )}
+            />
+            {errors.recurringUntil && (
+              <span className="text-destructive text-sm">
+                {errors.recurringUntil.message}
+              </span>
+            )}
           </div>
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">Cancelar</Button>
             </DialogClose>
             <Button
+              type="button"
               onClick={handleSubmit(onSubmit)}
-              type="submit"
               disabled={isSubmitting}
             >
-              Salvar
+              {isRecurring ? "Criar recorrências" : "Salvar"}
             </Button>
           </DialogFooter>
         </DialogContent>

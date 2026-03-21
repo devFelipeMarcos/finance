@@ -22,7 +22,7 @@ import {
   CategoriesFormData,
   categoriesSchema,
 } from "@/lib/schemas/categories-schema";
-import { SliderColor } from "./slider-color";
+import { ColorPicker } from "./slider-color";
 
 export function CategoriesDialog() {
   const { createCategories } = useCategories();
@@ -92,16 +92,10 @@ export function CategoriesDialog() {
                 name="color"
                 control={control}
                 render={({ field }) => (
-                  <>
-                    <SliderColor
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    />
-                    <div
-                      className="w-6 h-6 rounded-full border mt-2"
-                      style={{ backgroundColor: field.value }}
-                    />
-                  </>
+                  <ColorPicker
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  />
                 )}
               />
             </div>

@@ -49,7 +49,7 @@ export function EditTransactionDialog({
   );
 
   React.useEffect(() => {
-    fetch("/api/categories")
+    fetch("/api/categories?type=select")
       .then((res) => res.json())
       .then(setCategories);
   }, []);
@@ -65,6 +65,7 @@ export function EditTransactionDialog({
     handleSubmit,
     control,
     setValue,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
@@ -75,8 +76,11 @@ export function EditTransactionDialog({
       walletId: transaction.walletId,
       type: transaction.type,
       date: new Date(transaction.date),
+      isRecurring: transaction.isRecurring || false,
+      recurringUntil: transaction.recurringUntil ? new Date(transaction.recurringUntil) : null,
     },
   });
+
   const [valueDisplay, setValueDisplay] = React.useState(
     formatCurrencyBRL(transaction.value)
   );
@@ -98,10 +102,13 @@ export function EditTransactionDialog({
         date: new Date(formData.date),
         categoryId: formData.categoryId,
         walletId: formData.walletId,
-      },
+        isRecurring: formData.isRecurring,
+        recurringUntil: formData.recurringUntil,
+      } as never,
       {
         onSuccess: () => {
           toast.success("Transação editada com sucesso!");
+          reset();
         },
         onError: () => {
           toast.error("Erro ao editar transação");
@@ -115,7 +122,6 @@ export function EditTransactionDialog({
       <DialogTrigger asChild>
         <DropdownMenuItem
           onSelect={(e) => {
-            // Impede o Dropdown de fechar
             e.preventDefault();
           }}
         >
@@ -123,7 +129,7 @@ export function EditTransactionDialog({
         </DropdownMenuItem>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-xl md:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Editar Transação</DialogTitle>
           <DialogDescription>
@@ -151,7 +157,7 @@ export function EditTransactionDialog({
               )}
             </div>
             <div className="flex gap-4 flex-col sm:flex-row">
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 w-full">
                 <Controller
                   name="walletId"
                   control={control}
@@ -169,7 +175,7 @@ export function EditTransactionDialog({
                   </span>
                 )}
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 w-full">
                 <Controller
                   name="categoryId"
                   control={control}
@@ -188,7 +194,7 @@ export function EditTransactionDialog({
                 )}
               </div>
             </div>
-            <div className="flex gap-4 flex-col sm:flex-row ">
+            <div className="flex gap-4 flex-col sm:flex-row">
               <Controller
                 name="date"
                 control={control}
@@ -196,6 +202,11 @@ export function EditTransactionDialog({
                   <DateDialog value={field.value} onChange={field.onChange} />
                 )}
               />
+              {errors.date && (
+                <span className="text-destructive text-sm">
+                  {errors.date.message}
+                </span>
+              )}
               <Controller
                 name="type"
                 control={control}
@@ -218,8 +229,8 @@ export function EditTransactionDialog({
               <Button variant="outline">Cancelar</Button>
             </DialogClose>
             <Button
+              type="button"
               onClick={handleSubmit(onSubmit)}
-              type="submit"
               disabled={isSubmitting}
             >
               Salvar

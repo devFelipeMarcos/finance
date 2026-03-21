@@ -2,7 +2,26 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth-options";
 import { getServerSession } from "next-auth/next";
-import { transactionSchema } from "@/lib/schemas/transaction-schema";
+import { z } from "zod";
+
+const updateTransactionSchema = z.object({
+  description: z
+    .string()
+    .trim()
+    .min(3, "A descrição deve ter pelo menos 3 caracteres")
+    .max(100, "A descrição pode ter no máximo 100 caracteres"),
+  value: z
+    .number()
+    .positive()
+    .max(999999999),
+  categoryId: z.string().min(1),
+  walletId: z.string().min(1),
+  type: z.enum(["income", "expense", "to_receive", "to_pay"]),
+  date: z.coerce.date(),
+  isRecurring: z.boolean().optional(),
+  recurringUntil: z.union([z.coerce.date(), z.null()]).nullable().optional(),
+  recurringId: z.string().nullable().optional(),
+});
 
 // GET - detalhe de uma transação
 export async function GET(
@@ -41,10 +60,17 @@ export async function PUT(
   }
 
   const body = await req.json();
-  body.date = new Date(body.date);
 
-  const { description, categoryId, walletId, value, type, date } =
-    transactionSchema.parse(body);
+  const parsed = updateTransactionSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Dados inválidos", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  const { description, categoryId, walletId, value, type, date, isRecurring, recurringUntil, recurringId } = parsed.data;
 
   try {
     const transaction = await prisma.transaction.update({
@@ -56,12 +82,14 @@ export async function PUT(
         value,
         type,
         date,
-      },
+        isRecurring,
+        recurringUntil,
+        recurringId,
+      } as never,
     });
 
     return NextResponse.json(transaction, { status: 200 });
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Erro ao atualizar transação" },
       { status: 500 }

@@ -22,7 +22,7 @@ import {
   categoriesSchema,
 } from "@/lib/schemas/categories-schema";
 import { Categories } from "@/types/categories";
-import { SliderColor } from "./slider-color";
+import { ColorPicker } from "./slider-color";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 type EditCategoriesDialog = {
@@ -98,16 +98,10 @@ export function EditCategoriesDialog({ categories }: EditCategoriesDialog) {
               name="color"
               control={control}
               render={({ field }) => (
-                <>
-                  <SliderColor
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  />
-                  <div
-                    className="w-6 h-6 rounded-full border mt-2"
-                    style={{ backgroundColor: field.value }}
-                  />
-                </>
+                <ColorPicker
+                  value={field.value}
+                  onValueChange={field.onChange}
+                />
               )}
             />
           </div>

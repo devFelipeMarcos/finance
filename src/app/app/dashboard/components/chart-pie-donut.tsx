@@ -46,13 +46,17 @@ function groupTransactions(transactions: Transaction[]) {
 }
 
 export function ChartPieDonut({ walletIds }: { walletIds?: string[] }) {
-  const { mode } = usePeriod();
+  const { mode, startDate, endDate, showRecurringOnly } = usePeriod();
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
 
   const { transactions, isLoading } = useTransactions(
-    mode === "month" ? { month, year, walletIds } : { walletIds }
+    mode === "month"
+      ? { month, year, walletIds, recurringOnly: showRecurringOnly }
+      : mode === "custom"
+      ? { walletIds, startDate, endDate, recurringOnly: showRecurringOnly }
+      : { walletIds, recurringOnly: showRecurringOnly }
   );
 
   const chartData = groupTransactions(transactions ?? []);

@@ -6,22 +6,53 @@ type UseTransactionsProps = {
   year?: number;
   walletId?: string;
   walletIds?: string[];
+  startDate?: Date;
+  endDate?: Date;
+  recurringOnly?: boolean;
 };
 
-export function useTransactions({ month, year, walletId, walletIds }: UseTransactionsProps = {}) {
+export function useTransactions({
+  month,
+  year,
+  walletId,
+  walletIds,
+  startDate,
+  endDate,
+  recurringOnly,
+}: UseTransactionsProps = {}) {
   const queryClient = useQueryClient();
 
-  // GET
-
-  const queryKey = ["transactions", { month, year, walletId, walletIds }];
+  const queryKey = [
+    "transactions",
+    { month, year, walletId, walletIds, startDate, endDate, recurringOnly },
+  ];
 
   const { data, isLoading, error } = useQuery<Transaction[]>({
     queryKey,
     queryFn: async () => {
-      let url = "/api/transactions";
+      const params = new URLSearchParams();
 
       if (month && year) {
-        url += `?month=${month}&year=${year}`;
+        params.set("month", String(month));
+        params.set("year", String(year));
+      }
+
+      if (startDate) {
+        params.set("startDate", startDate.toISOString());
+      }
+
+      if (endDate) {
+        params.set("endDate", endDate.toISOString());
+      }
+
+      if (recurringOnly) {
+        params.set("recurringOnly", "true");
+      }
+
+      let url = "/api/transactions";
+      const queryString = params.toString();
+      if (queryString) {
+        url += `?${queryString}`;
       }
 
       const res = await fetch(url);
@@ -35,10 +66,12 @@ export function useTransactions({ month, year, walletId, walletIds }: UseTransac
     },
   });
 
-  // CREATE
   const createTransaction = useMutation({
     mutationFn: async (
-      transaction: Omit<Transaction, "id" | "createdAt" | "category" | "wallet">
+      transaction: Omit<Transaction, "id" | "createdAt" | "category" | "wallet" | "isRecurring" | "recurringUntil" | "recurringId"> & {
+        isRecurring: boolean;
+        recurringUntil?: Date | null;
+      }
     ) => {
       const res = await fetch("/api/transactions", {
         method: "POST",
@@ -53,7 +86,6 @@ export function useTransactions({ month, year, walletId, walletIds }: UseTransac
     },
   });
 
-  //UPDATE
   const updateTransaction = useMutation({
     mutationFn: async (
       transaction: Omit<Transaction, "createdAt" | "category" | "wallet">
@@ -71,7 +103,6 @@ export function useTransactions({ month, year, walletId, walletIds }: UseTransac
     },
   });
 
-  // DELETE
   const deleteTransaction = useMutation({
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/transactions/${id}`, { method: "DELETE" });

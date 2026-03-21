@@ -1,27 +1,18 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormData } from "@/lib/schemas/auth-schema";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Mail, LogIn } from "lucide-react";
+import { AuthCard, AuthHeader, AuthFooter, AuthDivider, SocialButton } from "@/components/auth/auth-card";
+import { FormField } from "@/components/auth/auth-card";
+import { Input, PasswordInput } from "@/components/ui/animated-input";
+import { AnimatedButton } from "@/components/ui/animated-button";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { toast } from "sonner";
-
-import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -48,83 +39,104 @@ export default function LoginPage() {
       } else {
         toast.error(res?.error || "E-mail ou senha incorretos");
       }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (err) {
+    } catch {
       toast.error("Erro ao tentar fazer login");
     }
   };
 
   return (
-    <div className="flex h-screen items-center justify-center">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Login</CardTitle>
+    <AuthCard>
+      <AuthHeader
+        icon={LogIn}
+        title="Acessar conta"
+        description="Entre para continuar gerenciando suas finanças"
+      />
 
-          <CardDescription>
-            Digite seu e-mail abaixo para acessar sua conta
-          </CardDescription>
-          <CardAction>
-            <Button variant="link">
-              <Link href="/register">Registrar</Link>
-            </Button>
-          </CardAction>
-        </CardHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  type="email"
-                  placeholder="E-mail"
-                  {...register("email")}
-                />
-                {errors.email && (
-                  <span className="text-red-500 text-sm">
-                    {errors.email.message}
-                  </span>
-                )}
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Senha</Label>
-                  <a
-                    href="#"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Esqueceu sua senha?
-                  </a>
-                </div>
-                <Input
-                  type="password"
-                  placeholder="Senha"
-                  {...register("password")}
-                />
-                {errors.password && (
-                  <span className="text-red-500 text-sm">
-                    {errors.password.message}
-                  </span>
-                )}
-              </div>
+      <div className="px-6 pb-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <FormField>
+            <Label htmlFor="email" className="text-sm font-medium">
+              E-mail
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="seu@email.com"
+              icon={Mail}
+              error={errors.email?.message}
+              {...register("email")}
+            />
+          </FormField>
+
+          <FormField>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-sm font-medium">
+                Senha
+              </Label>
+              <Link
+                href="#"
+                className="text-xs text-[#00FF7F] hover:text-[#00FF7F]/80 font-medium transition-colors"
+              >
+                Esqueceu?
+              </Link>
             </div>
-          </CardContent>
-          <CardFooter className="flex-col gap-2 pt-6">
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              Entrar
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() =>
-                signIn("google", { callbackUrl: "/app/dashboard" })
-              }
-            >
-              Entrar com Google
-            </Button>
-          </CardFooter>{" "}
+            <PasswordInput
+              id="password"
+              placeholder="••••••••"
+              error={errors.password?.message}
+              {...register("password")}
+            />
+          </FormField>
+
+          <AnimatedButton
+            type="submit"
+            variant="gradient"
+            className="w-full mt-6"
+            isLoading={isSubmitting}
+          >
+            Entrar
+          </AnimatedButton>
         </form>
-      </Card>
-    </div>
+
+        <AuthDivider label="ou continue com" />
+
+        <SocialButton
+          onClick={() => signIn("google", { callbackUrl: "/app/dashboard" })}
+          label="Google"
+          icon={
+            <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="currentColor"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="currentColor"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="currentColor"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
+            </svg>
+          }
+        />
+      </div>
+
+      <AuthFooter className="border-t bg-muted/30">
+        <p className="text-center text-sm text-muted-foreground">
+          Não tem uma conta?{" "}
+          <Link
+            href="/register"
+            className="font-semibold text-[#00FF7F] hover:text-[#00FF7F]/80 transition-colors"
+          >
+            Criar conta
+          </Link>
+        </p>
+      </AuthFooter>
+    </AuthCard>
   );
 }

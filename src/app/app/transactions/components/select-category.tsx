@@ -29,6 +29,10 @@ export function SelectCategory({
   onValueChange,
   categories,
 }: SelectCategoryProps) {
+  const sortedCategories = [...categories].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+
   return (
     <div className="flex flex-col gap-3">
       <Select value={value} onValueChange={onValueChange}>
@@ -38,8 +42,8 @@ export function SelectCategory({
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            <SelectLabel>Categories</SelectLabel>
-            {categories.map((cat) => (
+            <SelectLabel>Categorias</SelectLabel>
+            {sortedCategories.map((cat) => (
               <SelectItem key={cat.id} value={cat.id}>
                 {cat.name}
               </SelectItem>

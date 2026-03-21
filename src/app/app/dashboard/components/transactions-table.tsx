@@ -221,13 +221,17 @@ export const columns = (
 ];
 
 export function TransactionsTable({ walletIds }: { walletIds?: string[] }) {
-  const { mode } = usePeriod();
+  const { mode, startDate, endDate, showRecurringOnly } = usePeriod();
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
 
   const { transactions, deleteTransaction, isLoading } = useTransactions(
-    mode === "month" ? { month, year, walletIds } : { walletIds }
+    mode === "month"
+      ? { month, year, walletIds, recurringOnly: showRecurringOnly }
+      : mode === "custom"
+      ? { walletIds, startDate, endDate, recurringOnly: showRecurringOnly }
+      : { walletIds, recurringOnly: showRecurringOnly }
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);

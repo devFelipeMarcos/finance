@@ -64,6 +64,10 @@ model Transaction {
   type        TransactionType
   date        DateTime        @default(now())
 
+  isRecurring    Boolean @default(false)
+  recurringUntil DateTime?
+  recurringId    String?
+
   userId      String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 

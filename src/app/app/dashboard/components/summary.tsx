@@ -1,5 +1,4 @@
 "use client";
-import { useSummaryAll } from "@/hooks/use-summary-all";
 import { formatCurrency } from "@/utils/format-currency";
 import {
   Card,
@@ -18,39 +17,40 @@ import {
 } from "lucide-react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSummaryMonth } from "@/hooks/use-summary-month";
+import { useSummary } from "@/hooks/use-summary";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { usePeriod } from "@/context/period-context";
 
 type SummaryProps = { walletIds?: string[] };
+
 const Summary = ({ walletIds }: SummaryProps) => {
-  const { mode } = usePeriod();
-
-  const { incomeAll, expenseAll, balanceAll, economyAll, toReceiveAll, toPayAll } = useSummaryAll(walletIds);
-  const { incomeMonth, expenseMonth, economyMonth, toReceiveMonth, toPayMonth } = useSummaryMonth(walletIds);
-
-  // Escolhe qual conjunto de dados exibir com base no modo
-  const income = mode === "month" ? incomeMonth : incomeAll;
-  const expense = mode === "month" ? expenseMonth : expenseAll;
-  const balance = mode === "month" ? balanceAll : balanceAll;
-  const economy = mode === "month" ? economyMonth : economyAll;
-  const toReceive = mode === "month" ? toReceiveMonth : toReceiveAll;
-  const toPay = mode === "month" ? toPayMonth : toPayAll;
-  const futureBalance = toReceive - toPay;
-
+  const { mode, startDate, endDate } = usePeriod();
+  const { income, expense, balance, economy, toReceive, toPay } = useSummary(walletIds);
   const { isLoading } = useTransactions();
 
   if (isLoading) {
     return <Skeleton className="w-full h-52 rounded-xl animate-pulse" />;
   }
 
-  const dateToday = new Date().toLocaleString("pt-BR", { month: "long" });
+  const futureBalance = toReceive - toPay;
+
+  const getPeriodLabel = () => {
+    if (mode === "month") {
+      return format(new Date(), "MMMM 'de' yyyy", { locale: ptBR });
+    }
+    if (mode === "custom" && startDate && endDate) {
+      return `${format(startDate, "dd/MM/yyyy")} - ${format(endDate, "dd/MM/yyyy")}`;
+    }
+    return "Todo o período";
+  };
 
   return (
     <section className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
       <Card>
         <CardHeader>
           <CardTitle>Saldo Atual</CardTitle>
-          <CardDescription>Receita total</CardDescription>
+          <CardDescription>Receita - Despesas</CardDescription>
           <CardAction>
             <CircleDollarSign />
           </CardAction>
@@ -65,101 +65,68 @@ const Summary = ({ walletIds }: SummaryProps) => {
           </p>
         </CardContent>
         <CardFooter>
-          <p>Tendências em todo o período</p>
+          <p>Período: {getPeriodLabel()}</p>
         </CardFooter>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Entradas</CardTitle>
-          <CardDescription>
-            {mode === "month" ? (
-              <p>Total recebido no mês atual</p>
-            ) : (
-              <p>Total recebido em todo o período</p>
-            )}
-          </CardDescription>
+          <CardDescription>Total recebido</CardDescription>
           <CardAction>
             <ChartNoAxesCombined />
           </CardAction>
         </CardHeader>
         <CardContent>
-          <p className="text-4xl font-bold break-words">
+          <p className="text-4xl font-bold break-words text-green-500">
             {formatCurrency(income)}
           </p>
         </CardContent>
         <CardFooter>
-          {mode === "month" ? (
-            <p>Tendências no mês de {dateToday}</p>
-          ) : (
-            <p>Tendências em todo o período</p>
-          )}
+          <p>Período: {getPeriodLabel()}</p>
         </CardFooter>
       </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Saídas</CardTitle>
-          <CardDescription>
-            {mode === "month" ? (
-              <p>Total gastos no mês atual</p>
-            ) : (
-              <p>Total gastos em todo o período</p>
-            )}
-          </CardDescription>
+          <CardDescription>Total gastos</CardDescription>
           <CardAction>
             <TrendingDown />
           </CardAction>
         </CardHeader>
         <CardContent>
-          <p className="text-4xl font-bold break-words">
+          <p className="text-4xl font-bold break-words text-red-500">
             {formatCurrency(expense)}
           </p>
         </CardContent>
         <CardFooter>
-          {mode === "month" ? (
-            <p> Tendências no mês de {dateToday}</p>
-          ) : (
-            <p>Tendências em todo o período</p>
-          )}
+          <p>Período: {getPeriodLabel()}</p>
         </CardFooter>
       </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Economia</CardTitle>
-          <CardDescription>
-            {mode === "month" ? (
-              <p>Total economizado no mês atual</p>
-            ) : (
-              <p>Total economizado em todo o período</p>
-            )}
-          </CardDescription>
+          <CardDescription>Valor economizado</CardDescription>
           <CardAction>
             <DollarSign />
           </CardAction>
         </CardHeader>
         <CardContent>
-          <p className="text-4xl font-bold break-words">
+          <p className="text-4xl font-bold break-words text-[#00FF7F]">
             {formatCurrency(economy)}
           </p>
         </CardContent>
         <CardFooter>
-          {mode === "month" ? (
-            <p>Tendências no mês de {dateToday}</p>
-          ) : (
-            <p>Tendências em todo o período</p>
-          )}
+          <p>Período: {getPeriodLabel()}</p>
         </CardFooter>
       </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Valor a Receber</CardTitle>
-          <CardDescription>
-            {mode === "month" ? (
-              <p>Total previsto para receber no mês</p>
-            ) : (
-              <p>Total previsto para receber no período</p>
-            )}
-          </CardDescription>
+          <CardDescription>Previsto para receber</CardDescription>
           <CardAction>
             <DollarSign />
           </CardAction>
@@ -170,23 +137,14 @@ const Summary = ({ walletIds }: SummaryProps) => {
           </p>
         </CardContent>
         <CardFooter>
-          {mode === "month" ? (
-            <p>Tendências no mês de {dateToday}</p>
-          ) : (
-            <p>Tendências em todo o período</p>
-          )}
+          <p>Período: {getPeriodLabel()}</p>
         </CardFooter>
       </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Valor a Pagar</CardTitle>
-          <CardDescription>
-            {mode === "month" ? (
-              <p>Total previsto para pagar no mês</p>
-            ) : (
-              <p>Total previsto para pagar no período</p>
-            )}
-          </CardDescription>
+          <CardDescription>Previsto para pagar</CardDescription>
           <CardAction>
             <TrendingDown />
           </CardAction>
@@ -197,23 +155,14 @@ const Summary = ({ walletIds }: SummaryProps) => {
           </p>
         </CardContent>
         <CardFooter>
-          {mode === "month" ? (
-            <p>Tendências no mês de {dateToday}</p>
-          ) : (
-            <p>Tendências em todo o período</p>
-          )}
+          <p>Período: {getPeriodLabel()}</p>
         </CardFooter>
       </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Saldo Futuro</CardTitle>
-          <CardDescription>
-            {mode === "month" ? (
-              <p>Valor previsto que vai sobrar neste mês</p>
-            ) : (
-              <p>Valor previsto que vai sobrar no período</p>
-            )}
-          </CardDescription>
+          <CardDescription>Previsto a receber - a pagar</CardDescription>
           <CardAction>
             <DollarSign />
           </CardAction>
@@ -228,11 +177,7 @@ const Summary = ({ walletIds }: SummaryProps) => {
           </p>
         </CardContent>
         <CardFooter>
-          {mode === "month" ? (
-            <p>Baseado em Valor a Receber - Valor a Pagar do mês</p>
-          ) : (
-            <p>Baseado em Valor a Receber - Valor a Pagar do período</p>
-          )}
+          <p>Período: {getPeriodLabel()}</p>
         </CardFooter>
       </Card>
     </section>

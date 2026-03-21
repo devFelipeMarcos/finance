@@ -3,12 +3,16 @@ import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth-options";
 import { getServerSession } from "next-auth/next";
 import { transactionSchema } from "@/lib/schemas/transaction-schema";
+import { addMonths } from "date-fns";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const month = searchParams.get("month");
   const year = searchParams.get("year");
   const phone = searchParams.get("phone");
+  const startDateParam = searchParams.get("startDate");
+  const endDateParam = searchParams.get("endDate");
+  const recurringOnly = searchParams.get("recurringOnly");
 
   let dateFilter = {};
   if (month && year) {
@@ -21,7 +25,20 @@ export async function GET(req: Request) {
         lte: endDate,
       },
     };
+  } else if (startDateParam && endDateParam) {
+    const startDate = new Date(startDateParam);
+    const endDate = new Date(endDateParam);
+    endDate.setHours(23, 59, 59, 999);
+
+    dateFilter = {
+      date: {
+        gte: startDate,
+        lte: endDate,
+      },
+    };
   }
+
+  const recurringFilter = recurringOnly === "true" ? { isRecurring: true } : {};
 
   if (phone) {
     const user = await prisma.user.findUnique({
@@ -39,6 +56,7 @@ export async function GET(req: Request) {
       where: {
         userId: user.id,
         ...dateFilter,
+        ...recurringFilter,
       },
       include: {
         category: true,
@@ -60,6 +78,7 @@ export async function GET(req: Request) {
     where: {
       user: { email: session.user.email },
       ...dateFilter,
+      ...recurringFilter,
     },
     include: {
       category: true,
@@ -195,8 +214,11 @@ export async function POST(req: Request) {
     }
 
     body.date = new Date(body.date);
+    if (body.recurringUntil) {
+      body.recurringUntil = new Date(body.recurringUntil);
+    }
 
-    const { description, value, categoryId, walletId, type, date } =
+    const { description, value, categoryId, walletId, type, date, isRecurring, recurringUntil } =
       transactionSchema.parse(body);
 
     const session = await getServerSession(authOptions);
@@ -215,6 +237,8 @@ export async function POST(req: Request) {
       );
     }
 
+    const recurringId = isRecurring ? crypto.randomUUID() : null;
+
     const transaction = await prisma.transaction.create({
       data: {
         description,
@@ -224,8 +248,37 @@ export async function POST(req: Request) {
         type,
         date: new Date(date),
         userId: user.id,
-      },
+        isRecurring,
+        recurringUntil: recurringUntil ? new Date(recurringUntil) : null,
+        recurringId,
+      } as never,
     });
+
+    if (isRecurring && recurringUntil) {
+      const recurringUntilDate = new Date(recurringUntil);
+      const firstDate = new Date(date);
+      const dayOfMonth = firstDate.getDate();
+      let nextDate = addMonths(new Date(firstDate.getFullYear(), firstDate.getMonth(), dayOfMonth), 1);
+
+      while (nextDate <= recurringUntilDate) {
+        await prisma.transaction.create({
+          data: {
+            description,
+            categoryId,
+            walletId,
+            value,
+            type,
+            date: nextDate,
+            userId: user.id,
+            isRecurring: true,
+            recurringUntil: recurringUntilDate,
+            recurringId,
+          } as never,
+        });
+
+        nextDate = addMonths(nextDate, 1);
+      }
+    }
 
     return NextResponse.json(transaction, { status: 201 });
   } catch (err) {

@@ -21,6 +21,9 @@ export type Transaction = {
   category: Category;
   walletId: string;
   wallet: Wallet;
+  isRecurring: boolean;
+  recurringUntil: Date | null;
+  recurringId: string | null;
 };
 
 export type TransactionType = {

@@ -1,39 +1,45 @@
-import { Slider } from "@/components/ui/slider";
+"use client";
+
+import { cn } from "@/lib/utils";
 
 const colors = [
-  "#cccccc", // Cinza claro
-  "#b3b3b3",
-  "#999999",
-  "#808080",
-  "#666666",
-  "#4d4d4d",
-  "#333333",
-  "#ff9999", // Vermelho bem claro (rosado)
-  "#ff6666",
-  "#ff3333",
-  "#ff0000", // Vermelho puro
-  "#cc0000",
-  "#990000",
-  "#660000",
-  "#330000", // Quase preto com tom vermelho
+  "#ef4444", // Vermelho
+  "#f97316", // Laranja
+  "#eab308", // Amarelo
+  "#22c55e", // Verde
+  "#14b8a6", // Teal
+  "#06b6d4", // Ciano
+  "#3b82f6", // Azul
+  "#8b5cf6", // Violeta
+  "#ec4899", // Rosa
+  "#6b7280", // Cinza
+  "#000000", // Preto
+  "#ffffff", // Branco
 ];
 
-// Componente do Slider
-export function SliderColor({
+export function ColorPicker({
   value,
   onValueChange,
 }: {
   value: string;
   onValueChange: (color: string) => void;
 }) {
-  const index = colors.indexOf(value);
-
   return (
-    <Slider
-      value={[index >= 0 ? index : 0]}
-      max={colors.length - 1}
-      step={1}
-      onValueChange={([val]) => onValueChange(colors[val])}
-    />
+    <div className="grid grid-cols-6 gap-2 p-1">
+      {colors.map((color) => (
+        <button
+          key={color}
+          type="button"
+          onClick={() => onValueChange(color)}
+          className={cn(
+            "w-8 h-8 rounded-lg border-2 transition-all hover:scale-110",
+            value === color
+              ? "border-foreground scale-110 shadow-md"
+              : "border-transparent hover:border-muted-foreground/30"
+          )}
+          style={{ backgroundColor: color }}
+        />
+      ))}
+    </div>
   );
 }

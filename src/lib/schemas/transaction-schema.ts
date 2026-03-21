@@ -17,7 +17,24 @@ export const transactionSchema = z.object({
 
   type: z.enum(["income", "expense", "to_receive", "to_pay"], { message: "Select a valid type" }),
 
-  date: z.date("Selecione uma data válida"),
-});
+  date: z.date(),
+
+  isRecurring: z.boolean(),
+  recurringUntil: z.date().nullable().optional(),
+}).refine(
+  (data) => {
+    if (data.isRecurring && !data.recurringUntil) {
+      return false;
+    }
+    if (data.isRecurring && data.recurringUntil && data.recurringUntil <= data.date) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "A data final deve ser posterior à data de início",
+    path: ["recurringUntil"],
+  }
+);
 
 export type TransactionFormData = z.infer<typeof transactionSchema>;
