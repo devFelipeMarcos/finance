@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 const walletBase = z.object({
   name: z
     .string()
@@ -18,14 +19,8 @@ export const walletSchema = z.union([
       .string()
       .trim()
       .min(1, "Escolha uma cor"),
-    limit: z
-      .number("Informe um limite válido")
-      .positive("O limite deve ser maior que zero"),
-    billingDay: z
-      .number("Informe um dia de vencimento válido")
-      .int("Informe um dia inteiro")
-      .min(1, "Dia deve ser entre 1 e 31")
-      .max(31, "Dia deve ser entre 1 e 31"),
+    limit: z.any().optional(),
+    billingDay: z.any().optional(),
   }),
 ]);
 
