@@ -75,7 +75,7 @@ export default function WalletCard({
           </div>
           <div className="flex items-center gap-2">
             <EditWalletDialog wallets={{ id, name, type, brand, color, limit, billingDay: billingDay ?? undefined }} />
-            <DeleteWalletDialog id={id} />
+            <DeleteWalletDialog id={id} isCard />
           </div>
         </div>
 

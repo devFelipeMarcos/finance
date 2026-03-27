@@ -1,4 +1,5 @@
 import DashboardContent from "./components/dashboard-content";
+import { PendingTransactionsModalWrapper } from "@/components/pending-transactions-modal-wrapper";
 
 export const metadata = {
   title: "Dashboard | Balancefy",
@@ -7,7 +8,12 @@ export const metadata = {
 };
 
 const Dashboard = () => {
-  return <DashboardContent />;
+  return (
+    <>
+      <DashboardContent />
+      <PendingTransactionsModalWrapper />
+    </>
+  );
 };
 
 export default Dashboard;

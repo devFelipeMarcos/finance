@@ -1,5 +1,6 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import { PendingTransactionsModalWrapper } from "@/components/pending-transactions-modal-wrapper";
 
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth-options";
@@ -18,12 +19,13 @@ export default async function RootLayout({
     redirect("/login");
   }
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <AppSidebar />
-      <main className="w-full bg-sidebar md:p-3">
+      <main className="w-full bg-sidebar md:p-3 flex-1 overflow-hidden">
         <div className="w-full h-full flex flex-col gap-4 px-4 bg-background md:rounded-xl">
           <AppHeader />
           <PeriodProvider>{children}</PeriodProvider>
+          <PendingTransactionsModalWrapper />
         </div>
       </main>
     </SidebarProvider>
