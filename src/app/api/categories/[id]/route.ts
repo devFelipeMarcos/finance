@@ -41,7 +41,7 @@ export async function PUT(
   }
 
   const body = await req.json();
-  const { name, color } = categoriesSchema.parse(body);
+  const { name, emoji, color } = categoriesSchema.parse(body);
 
   if (!name) {
     return NextResponse.json(
@@ -55,6 +55,7 @@ export async function PUT(
       where: { id },
       data: {
         name,
+        emoji,
         color,
       },
     });

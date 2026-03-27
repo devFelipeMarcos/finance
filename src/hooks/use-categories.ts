@@ -40,7 +40,7 @@ export function useCategories({ month, year }: UseCategoriesProps = {}) {
   //UPDATE
   const updateCategories = useMutation({
     mutationFn: async (
-      categories: Pick<Categories, "id" | "name" | "color">
+      categories: Pick<Categories, "id" | "name" | "emoji" | "color">
     ) => {
       const res = await fetch(`/api/categories/${categories.id}`, {
         method: "PUT",

@@ -1,4 +1,3 @@
-import { PeriodFilterHeader } from "@/components/period-filter-header";
 import { CategoriesDataTable } from "./components/categories-table";
 
 export const metadata = {
@@ -9,12 +8,16 @@ export const metadata = {
 
 export default function CategoriesPage() {
   return (
-    <div className="w-full flex flex-col gap-4 ">
-      <PeriodFilterHeader title="Categorias" />
-
-      <div className="w-full flex flex-col xl:flex-row-reverse gap-4 ">
-        <CategoriesDataTable />
+    <div className="w-full h-full flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Categorias</h1>
+          <p className="text-muted-foreground text-sm">
+            Organize suas transações por categoria
+          </p>
+        </div>
       </div>
+      <CategoriesDataTable />
     </div>
   );
 }

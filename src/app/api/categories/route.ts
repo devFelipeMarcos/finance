@@ -52,6 +52,7 @@ export async function GET(req: Request) {
         const result = categories.map((cat) => ({
           id: cat.id,
           name: cat.name,
+          emoji: cat.emoji,
           color: cat.color,
           relationship: cat.transactions.map((t) => t.description),
           value: cat.transactions.reduce((acc, t) => acc + t.value, 0),
@@ -63,7 +64,7 @@ export async function GET(req: Request) {
 
       const categories = await prisma.category.findMany({
         where: { userId: user.id },
-        select: { id: true, name: true, color: true },
+        select: { id: true, name: true, emoji: true, color: true },
       });
 
       return NextResponse.json(categories);
@@ -104,6 +105,7 @@ export async function GET(req: Request) {
       const result = categories.map((cat) => ({
         id: cat.id,
         name: cat.name,
+        emoji: cat.emoji,
         color: cat.color,
         relationship: cat.transactions.map((t) => t.description),
         value: cat.transactions.reduce((acc, t) => acc + t.value, 0),
@@ -115,7 +117,7 @@ export async function GET(req: Request) {
 
     const categories = await prisma.category.findMany({
       where: { userId: user.id },
-      select: { id: true, name: true, color: true },
+      select: { id: true, name: true, emoji: true, color: true },
     });
 
     return NextResponse.json(categories);
@@ -134,7 +136,7 @@ export async function POST(req: Request) {
     const phone = body.phone as string | undefined;
 
     if (phone) {
-      const { name, color } = categoriesSchema.parse(body);
+      const { name, color, emoji } = categoriesSchema.parse(body);
 
       const user = await prisma.user.findUnique({
         where: { phone },
@@ -150,7 +152,6 @@ export async function POST(req: Request) {
       const existingCategory = await prisma.category.findFirst({
         where: {
           name,
-          color,
           userId: user.id,
         },
       });
@@ -166,6 +167,7 @@ export async function POST(req: Request) {
         data: {
           name,
           color,
+          emoji,
           userId: user.id,
         },
       });
@@ -187,12 +189,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const { name, color } = categoriesSchema.parse(body);
+    const { name, color, emoji } = categoriesSchema.parse(body);
 
     const existingCategory = await prisma.category.findFirst({
       where: {
         name,
-        color,
         userId: user.id,
       },
     });
@@ -208,6 +209,7 @@ export async function POST(req: Request) {
       data: {
         name,
         color,
+        emoji,
         userId: user.id,
       },
     });

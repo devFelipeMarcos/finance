@@ -80,41 +80,39 @@ export default function WalletCard({
         </div>
 
         <div className="relative z-10 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
               <p className="text-xs opacity-75 mb-1">Número do cartão</p>
               <p className="font-mono text-lg tracking-widest">
                 •••• •••• •••• {finalDigits}
               </p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2">
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 flex-shrink-0">
               <p className="text-xs opacity-75">Bandeira</p>
               <p className="font-bold text-sm uppercase">{brandLogos[brand ?? ""] || brand}</p>
             </div>
           </div>
 
-          <div className="flex justify-between items-end">
-            <div className="flex gap-6">
-              <div>
-                <p className="text-xs opacity-75">Fatura atual</p>
-                <p className="font-semibold">{formatCurrency(totalExpense)}</p>
-              </div>
-              <div>
-                <p className="text-xs opacity-75">Limite disponível</p>
-                <p className={`font-semibold ${creditBalance < 0 ? "text-red-300" : ""}`}>
-                  {formatCurrency(creditBalance)}
-                </p>
-              </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <p className="text-xs opacity-75">Fatura atual</p>
+              <p className="font-semibold text-sm sm:text-base truncate">{formatCurrency(totalExpense)}</p>
             </div>
-            <div className="text-right">
+            <div>
+              <p className="text-xs opacity-75">Disponível</p>
+              <p className={`font-semibold text-sm sm:text-base truncate ${creditBalance < 0 ? "text-red-300" : ""}`}>
+                {formatCurrency(creditBalance)}
+              </p>
+            </div>
+            <div>
               <p className="text-xs opacity-75">Limite total</p>
-              <p className="font-semibold">{formatCurrency(limit ?? 0)}</p>
+              <p className="font-semibold text-sm sm:text-base truncate">{formatCurrency(limit ?? 0)}</p>
             </div>
           </div>
         </div>
 
-        <div className="absolute bottom-3 right-6">
-          <div className={`font-bold text-xl tracking-wider ${brand === "amex" ? "text-yellow-300" : "text-white"}`}>
+        <div className="absolute bottom-4 right-4 sm:right-6">
+          <div className={`font-bold text-lg sm:text-xl tracking-wider ${brand === "amex" ? "text-yellow-300" : "text-white"}`}>
             {brandLogos[brand ?? ""] || "CARD"}
           </div>
         </div>

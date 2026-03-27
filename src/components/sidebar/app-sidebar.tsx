@@ -25,19 +25,26 @@ import { SidebarItem, CollapseButton } from "./sidebar-item";
 import { usePendingCount } from "@/hooks/use-pending-count";
 import { cn } from "@/lib/utils";
 
-const mainNavItems = [
-  { title: "Dashboard", url: "dashboard", icon: CircleGauge },
-  { title: "Carteira", url: "wallet", icon: Wallet },
-  { title: "Transações", url: "transactions", icon: ArrowLeftRight },
-  { title: "Categorias", url: "categories", icon: ChartBarStacked },
-  { title: "Relatórios", url: "reports", icon: ClipboardMinus },
-  { title: "Ajuda", url: "help", icon: Info },
-];
-
 export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
   const { count: pendingCount } = usePendingCount();
   const isCollapsed = state === "collapsed";
+
+  const mainNavItems = [
+    { title: "Dashboard", url: "dashboard", icon: CircleGauge },
+    { title: "Carteira", url: "wallet", icon: Wallet },
+    { title: "Transações", url: "transactions", icon: ArrowLeftRight },
+    { title: "Categorias", url: "categories", icon: ChartBarStacked },
+    {
+      title: "Pendências",
+      url: "pending",
+      icon: Info,
+      badge: pendingCount,
+      badgeVariant: "danger" as const,
+    },
+    { title: "Relatórios", url: "reports", icon: ClipboardMinus },
+    { title: "Ajuda", url: "help", icon: Info },
+  ];
 
   return (
     <Sidebar collapsible="icon" className="border-none bg-sidebar">
@@ -70,39 +77,12 @@ export function AppSidebar() {
                   icon={item.icon}
                   label={item.title}
                   href={item.url}
+                  badge={item.badge}
+                  badgeVariant={item.badgeVariant}
                   isCollapsed={isCollapsed}
                 />
               ))}
             </div>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup className="px-2">
-          <div
-            className={cn(
-              "h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-3",
-              isCollapsed ? "mx-2" : "mx-4"
-            )}
-          />
-          <SidebarGroupContent>
-            <SidebarItem
-              icon={() => (
-                <div className="relative">
-                  <Info className="w-5 h-5" />
-                  {pendingCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
-                      <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" />
-                    </span>
-                  )}
-                </div>
-              )}
-              label="Pendências"
-              href="pending"
-              badge={pendingCount}
-              badgeVariant="danger"
-              isCollapsed={isCollapsed}
-            />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

@@ -3,226 +3,183 @@
 import * as React from "react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { Transaction } from "@/types/transaction";
-import { type UseMutationResult } from "@tanstack/react-query";
 
 import {
-  ColumnDef,
-  ColumnFiltersState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  SortingState,
-  useReactTable,
-  VisibilityState,
-} from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+  ArrowUpDown,
+  Search,
+  TrendingUp,
+  TrendingDown,
+  Clock,
+  Filter,
+  MoreHorizontal,
+  Repeat,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { EditTransactionDialog } from "@/app/app/transactions/components/edit-transaction-dialog";
-import { toast } from "sonner";
-
+import { TransactionDialog } from "./create-transaction-dialog";
+import { EditTransactionDialog } from "./edit-transaction-dialog";
 import { usePeriod } from "@/context/period-context";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
-export const columns = (
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  deleteTransaction: UseMutationResult<any, Error, string, unknown>
-): ColumnDef<Transaction>[] => [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Selecionar tudo"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Selecionar linha"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
+const typeConfig = {
+  income: {
+    label: "Entrada",
+    icon: TrendingUp,
+    color: "text-emerald-400",
+    bg: "bg-emerald-500/10",
+    border: "border-emerald-500/20",
   },
-  {
-    accessorKey: "description",
-    header: "Descrição",
-    cell: ({ row }) => <div>{row.getValue("description")}</div>,
+  to_receive: {
+    label: "A Receber",
+    icon: Clock,
+    color: "text-blue-400",
+    bg: "bg-blue-500/10",
+    border: "border-blue-500/20",
   },
-  {
-    accessorKey: "wallet.name",
-    header: "Carteira",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.original.wallet?.name ?? "—"}</div>
-    ),
+  expense: {
+    label: "Saída",
+    icon: TrendingDown,
+    color: "text-red-400",
+    bg: "bg-red-500/10",
+    border: "border-red-500/20",
   },
-  {
-    accessorKey: "category.name",
-    header: "Categoria",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.original.category?.name ?? "—"}</div>
-    ),
+  to_pay: {
+    label: "A Pagar",
+    icon: Clock,
+    color: "text-orange-400",
+    bg: "bg-orange-500/10",
+    border: "border-orange-500/20",
   },
+};
 
-  {
-    accessorKey: "type",
-    header: "Tipo",
-    cell: ({ row }) => {
-      const type = row.getValue("type") as string;
+function TransactionCard({
+  transaction,
+  onEdit,
+  onDelete,
+}: {
+  transaction: Transaction;
+  onEdit: () => void;
+  onDelete: (id: string) => void;
+}) {
+  const config = typeConfig[transaction.type] || typeConfig.expense;
+  const categoryEmoji = transaction.category?.emoji || "📁";
 
-      const label =
-        type === "income"
-          ? "Entrada"
-          : type === "expense"
-          ? "Saída"
-          : type === "to_receive"
-          ? "A Receber"
-          : type === "to_pay"
-          ? "A Pagar"
-          : "Desconhecido";
-
-      return (
-        <span
-          className={
-            type === "income"
-              ? "text-chart-2 font-medium"
-              : type === "to_receive"
-              ? "text-chart-2 font-medium"
-              : "text-destructive font-medium"
-          }
-        >
-          {label}
-        </span>
-      );
-    },
-  },
-  {
-    accessorKey: "value",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+  return (
+    <div
+      onClick={onEdit}
+      className={cn(
+        "group relative flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer",
+        "bg-card hover:bg-card/80 hover:shadow-lg hover:shadow-black/20",
+        config.border
+      )}
+    >
+      <div
+        className={cn(
+          "flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl text-lg sm:text-xl flex-shrink-0",
+          config.bg
+        )}
       >
-        Valor
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const valor = parseFloat(row.getValue("value"));
-      const formatted = new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(valor);
+        {categoryEmoji}
+      </div>
 
-      return <div className="font-medium px-4">{formatted}</div>;
-    },
-  },
-  {
-    accessorKey: "date",
-    header: "Data",
-    cell: ({ row }) => {
-      const date = new Date(row.getValue("date"));
-      return (
-        <div>
-          {date.toLocaleDateString("pt-BR", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          })}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <h3 className="font-medium text-sm sm:text-base truncate">{transaction.description}</h3>
+          {transaction.isRecurring && (
+            <Repeat className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+          )}
         </div>
-      );
-    },
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const transaction = row.original;
+        <div className="flex items-center gap-1 sm:gap-2 mt-0.5 sm:mt-1 text-xs sm:text-sm text-muted-foreground">
+          <span className="truncate max-w-[80px] sm:max-w-none">{transaction.category?.name || "Sem categoria"}</span>
+          <span className="hidden sm:inline text-muted-foreground/50">•</span>
+          <span className="hidden sm:inline truncate">{transaction.wallet?.name || "Sem carteira"}</span>
+        </div>
+      </div>
 
-      function handleDeleteTransaction() {
-        deleteTransaction.mutate(transaction.id, {
-          onSuccess: () => {
-            toast.success("Transação apagada com sucesso!");
-          },
-          onError: () => {
-            toast.error("Erro ao apagar transação!");
-          },
-        });
-      }
+      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+        <div className="text-right">
+          <p
+            className={cn(
+              "font-semibold text-sm sm:text-lg whitespace-nowrap",
+              transaction.type === "income" || transaction.type === "to_receive"
+                ? "text-emerald-400"
+                : "text-red-400"
+            )}
+          >
+            {transaction.type === "income" || transaction.type === "to_receive"
+              ? "+"
+              : "-"}
+            {new Intl.NumberFormat("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            }).format(parseFloat(transaction.value.toString()))}
+          </p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
+            {new Date(transaction.date).toLocaleDateString("pt-BR", {
+              day: "2-digit",
+              month: "short",
+            })}
+          </p>
+        </div>
 
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Abrir menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+        <div
+          onClick={(e) => e.stopPropagation()}
+        >
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 sm:h-8 sm:w-8 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              >
+                <MoreHorizontal className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <EditTransactionDialog transaction={transaction} />
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive cursor-pointer"
+                onClick={() => onDelete(transaction.id)}
+              >
+                Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-            <DropdownMenuItem
-              onClick={() =>
-                navigator.clipboard.writeText(transaction.id.toString())
-              }
-            >
-              Copiar ID
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              onClick={() =>
-                navigator.clipboard.writeText(transaction.description)
-              }
-            >
-              Copiar descrição
-            </DropdownMenuItem>
-
-            <DropdownMenuSeparator />
-
-            <EditTransactionDialog transaction={transaction} />
-
-            <DropdownMenuItem
-              className="text-primary"
-              onClick={handleDeleteTransaction}
-            >
-              Excluir transação
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
+function TransactionSkeleton() {
+  return (
+    <div className="flex items-center gap-4 p-4 rounded-xl border bg-card animate-pulse">
+      <div className="h-12 w-12 rounded-xl bg-muted" />
+      <div className="flex-1 space-y-2">
+        <div className="h-4 w-32 bg-muted rounded" />
+        <div className="h-3 w-48 bg-muted rounded" />
+      </div>
+      <div className="text-right space-y-2">
+        <div className="h-5 w-24 bg-muted rounded" />
+        <div className="h-3 w-16 bg-muted rounded" />
+      </div>
+    </div>
+  );
+}
 
 export function TransactionsTable() {
-  const { mode } = usePeriod();
+  const { mode, startDate, endDate } = usePeriod();
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
@@ -231,151 +188,199 @@ export function TransactionsTable() {
     mode === "month" ? { month, year } : undefined
   );
 
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("desc");
 
-  const table = useReactTable<Transaction>({
-    data: transactions ?? [],
-    columns: columns(deleteTransaction),
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
-  });
+  const filteredTransactions = React.useMemo(() => {
+    if (!transactions) return [];
+
+    let filtered = transactions;
+
+    if (mode === "custom" && startDate && endDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      
+      filtered = filtered.filter((t) => {
+        const date = new Date(t.date);
+        return date >= start && date <= end;
+      });
+    }
+
+    if (searchQuery) {
+      filtered = filtered.filter((t) =>
+        t.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+    });
+  }, [transactions, searchQuery, sortOrder, mode, startDate, endDate]);
+
+  const totals = React.useMemo(() => {
+    if (!filteredTransactions) return { income: 0, expense: 0 };
+
+    return filteredTransactions.reduce(
+      (acc, t) => {
+        if (t.type === "income") {
+          acc.income += parseFloat(t.value.toString());
+        } else if (t.type === "expense") {
+          acc.expense += parseFloat(t.value.toString());
+        }
+        return acc;
+      },
+      { income: 0, expense: 0 }
+    );
+  }, [filteredTransactions]);
+
+  function handleDelete(id: string) {
+    deleteTransaction.mutate(id, {
+      onSuccess: () => toast.success("Transação excluída!"),
+      onError: () => toast.error("Erro ao excluir transação"),
+    });
+  }
+
+  const [editTransaction, setEditTransaction] = React.useState<Transaction | null>(null);
 
   if (isLoading) {
-    return <Skeleton className="h-96 w-full rounded-xl animate-pulse" />;
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Skeleton className="h-24 rounded-xl" />
+          <Skeleton className="h-24 rounded-xl" />
+          <Skeleton className="h-24 rounded-xl" />
+        </div>
+        <div className="space-y-2">
+          {[1, 2, 3, 4].map((i) => (
+            <TransactionSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="w-full">
-      <div className="flex items-center py-4 gap-2">
-        <Input
-          placeholder="Filtrar descricão..."
-          value={
-            (table.getColumn("description")?.getFilterValue() as string) ?? ""
-          }
-          onChange={(event) =>
-            table.getColumn("description")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="p-4 rounded-xl border bg-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Entradas</p>
+              <p className="text-2xl font-bold text-emerald-400">
+                {new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(totals.income)}
+              </p>
+            </div>
+            <div className="h-12 w-12 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+              <TrendingUp className="h-6 w-6 text-emerald-400" />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border bg-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Saídas</p>
+              <p className="text-2xl font-bold text-red-400">
+                {new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(totals.expense)}
+              </p>
+            </div>
+            <div className="h-12 w-12 rounded-xl bg-red-500/10 flex items-center justify-center">
+              <TrendingDown className="h-6 w-6 text-red-400" />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border bg-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Saldo</p>
+              <p
+                className={cn(
+                  "text-2xl font-bold",
+                  totals.income - totals.expense >= 0
+                    ? "text-emerald-400"
+                    : "text-red-400"
+                )}
+              >
+                {new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(totals.income - totals.expense)}
+              </p>
+            </div>
+            <div className="h-12 w-12 rounded-xl bg-[#00FF7F]/10 flex items-center justify-center">
+              <span className="text-xl font-bold text-[#00FF7F]">R$</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar transações..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-card"
+          />
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
+          className="cursor-pointer"
+        >
+          <ArrowUpDown className="h-4 w-4 mr-2" />
+          {sortOrder === "desc" ? "Mais recentes" : "Mais antigas"}
+        </Button>
+
+        <TransactionDialog />
+      </div>
+
+      <div className="space-y-2">
+        {filteredTransactions.length > 0 ? (
+          filteredTransactions.map((transaction) => (
+            <TransactionCard
+              key={transaction.id}
+              transaction={transaction}
+              onEdit={() => setEditTransaction(transaction)}
+              onDelete={handleDelete}
+            />
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
+              <Filter className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-medium">Nenhuma transação encontrada</h3>
+            <p className="text-muted-foreground mt-1">
+              {searchQuery
+                ? "Tente buscar por outro termo"
+                : "Adicione sua primeira transação"}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {editTransaction && (
+        <EditTransactionDialog
+          transaction={editTransaction}
+          open={!!editTransaction}
+          onOpenChange={(open) => !open && setEditTransaction(null)}
         />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Colunas <ChevronDown />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="overflow-hidden rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  Nenhum resultado.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} linha(s) selecionada(s)
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Anterior
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Próxima
-          </Button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

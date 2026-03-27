@@ -35,7 +35,7 @@ export function SidebarItem({
     <Link
       href={href}
       className={cn(
-        "group relative flex items-center gap-3 rounded-lg transition-all duration-200 py-3",
+        "group relative flex items-center gap-3 rounded-lg transition-all duration-200 py-3 cursor-pointer",
         isActive
           ? "bg-[#00FF7F]/15 text-[#00FF7F] shadow-[0_0_15px_-3px_rgba(0,255,127,0.3)]"
           : "text-muted-foreground hover:bg-[#00FF7F]/10 hover:text-[#00FF7F]",
@@ -129,7 +129,7 @@ export function CollapseButton({ isCollapsed, onToggle }: CollapseButtonProps) {
           <button
             onClick={onToggle}
             className={cn(
-              "flex items-center justify-center rounded-lg transition-all duration-200",
+              "flex items-center justify-center rounded-lg transition-all duration-200 cursor-pointer",
               "hover:bg-white/10 text-muted-foreground hover:text-white",
               "focus:outline-none focus:ring-2 focus:ring-[#00FF7F]/50"
             )}
